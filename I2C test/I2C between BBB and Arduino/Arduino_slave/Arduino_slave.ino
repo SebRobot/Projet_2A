@@ -13,7 +13,7 @@
 #include <Wire.h>
 
 #define ADDR 0x0a   //address of Arduino 
-#define MODE 0      //0 : receive a charactere, 1 : send a charactere
+#define MODE 1      //0 : receive a charactere, 1 : send a charactere string
 
 void setup()
   {
@@ -42,6 +42,7 @@ void receiveEvent(int howMany)
         }
       break;
     case(1) :
+      Wire.write("Bonjour BB");
       break;
     default :
       break;
