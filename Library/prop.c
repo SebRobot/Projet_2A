@@ -4,6 +4,7 @@
 //Speed max 1m/s ->127
 
 #include "prop.h"
+#include "i2c.h"
 
 #include <fcntl.h>
 #include <linux/i2c-dev.h>
@@ -41,50 +42,50 @@
 
 
 //***I2C function***//
-    void writeData(int fic, char *buf, int nbytes){
-        int bytes;
-	
-	    if((bytes=write(fic, buf, nbytes)) == -1){					
-		    perror("writeData: Error while trying to write data - ");	
-	        }
-	    else if(bytes != nbytes){
-		    printf("Warning : Only %u bytes written out of %u requested\n", bytes, nbytes);	
-	        }
-        }
+//    void writeData(int fic, char *buf, int nbytes){
+//        int bytes;
+//
+//	    if((bytes=write(fic, buf, nbytes)) == -1){
+//		    perror("writeData: Error while trying to write data - ");
+//	        }
+//	    else if(bytes != nbytes){
+//		    printf("Warning : Only %u bytes written out of %u requested\n", bytes, nbytes);
+//	        }
+//        }
 
-    void readData(int fd, char *buf, int nbytes){
-        int bytes;
+//    void readData(int fd, char *buf, int nbytes){
+//        int bytes;
+//
+//	    if((bytes = read(fd, buf, nbytes)) == -1){
+//		    perror("readData: Error while trying to read data - ");
+//	        }
+//	    else if(bytes != nbytes){
+//		    printf("Warning : Only %u bytes read out of %u requested\n", bytes, nbytes);
+//	        }
+//        }
 
-	    if((bytes = read(fd, buf, nbytes)) == -1){
-		    perror("readData: Error while trying to read data - ");
-	        }
-	    else if(bytes != nbytes){
-		    printf("Warning : Only %u bytes read out of %u requested\n", bytes, nbytes);
-	        }
-        }
+//    int openI2C(void){
+//        int fd;
+//
+//        if ((fd = open(FILE_I2C, O_RDWR)) == -1){
+//	        perror("openPort: Unable to open - ");
+//            return(-1);
+//            }
+//        else{
+//            if (ioctl(fd, I2C_SLAVE, ADDR_MD25) == -1){
+//            perror("Failed to acquire bus access and/or talk to slave.");
+//            return(-1);
+//                }
+//            }
+//        return (fd);
+//        }
 
-    int openI2C(void){
-        int fd;
-				               
-        if ((fd = open(FILE_I2C, O_RDWR)) == -1){
-	        perror("openPort: Unable to open - ");
-            return(-1);
-            } 
-        else{
-            if (ioctl(fd, I2C_SLAVE, ADDR) == -1){
-            perror("Failed to acquire bus access and/or talk to slave.");
-            return(-1);
-                }
-            }
-        return (fd);
-        }
-
-    void closeI2C(int fd)
-        {	
-	    if(close(fd) == -1){	
-		    perror("closePort: Unable to close - ");
-	        }
-        }
+//    void closeI2C(int fd)
+//        {
+//	    if(close(fd) == -1){
+//		    perror("closePort: Unable to close - ");
+//	        }
+//        }
 
 
 //***Init controller***//
@@ -191,6 +192,8 @@
         bufW[1] =((char)turn);					
         //printf("envoyer a prop2 : %hhi et speed=%d\n",bufW[1],turn);		
         writeData(idFicI2C, bufW, 2);	
+
+        return 0;
         }
 
 
@@ -281,7 +284,7 @@
 
 //***Rotation on the spot***//
     void rot3(float theta){ //Warning : rot is a block function
-        float d1, d2, d=0, r, theta_start;
+        float theta_start; // d=0, d1, d2, r
         
         printf("theta ask =%f, ",theta);
         if((theta > 180) || (theta < -180)){
@@ -359,7 +362,7 @@
         }
 
     int followTraj(point pt){ //Warning is a block function
-        float alpha, theta, beta, d;
+        float alpha, beta; // d, theta
         int time_prev=0;
 
         //for start with good orientation
@@ -394,6 +397,7 @@
                 return 1;
                 }
             }
+        return 0;
         }
 
 
@@ -426,71 +430,72 @@ while(1){
 
 
 //old test
-/* //trajectoire
-    while(1){
-        usleep(10000);
-        nd1 = dist(1);
-        nd2 = dist(2);
-        pos3(&x3, &y3, &theta3);
-
-        beta=trajCorr(x3, y3, theta3, 500, 500);
-        printf("%.2f, %.2f, %.2f°, beta=%f\n", x3, y3, theta3, beta*180./M_PI);
-        move(100, beta*180./M_PI);
-        if(((fabs(x3-500.)<10.) && (fabs(y3-500.)<10.)))
-            {
-            move(0,0);
-            printf("fin\n");
-            return 1;
-            }
-        }
-*/
-
-
-
-
-/*
-        while(1){
-        usleep(10000);
-    us_start = micros();
-        nd1 = dist(1);
-    t0 = micros() - us_start;
-        nd2 = dist(2);
-
-    us_start = micros();
-        pos(&x, &y, &theta);
-    t1 = micros() - us_start;
-
-    us_start = micros();
-        pos2(&x2, &y2, &theta2);
-    t2 = micros() - us_start;
-
-    us_start = micros();
-        pos3(&x3, &y3, &theta3);
-    t3 = micros() - us_start;
-
-    //printf("%u,%u,%u,%u\n", t0, t1, t2, t3);
-
-    printf("%.2f, %.2f, %.2f°, %.2f, %.2f, %.2f°, %.2f, %.2f, %.2f°\n", x, y, theta*180./M_PI, x2, y2, theta2*180./M_PI, x3, y3, theta3*180./M_PI);
-
-    }
-   /* move(1000,0,idFicI2C);
-
-
-
-    sleep(1);
+//
+// //trajectoire
+//    while(1){
+//        usleep(10000);
+//        nd1 = dist(1);
+//        nd2 = dist(2);
+//        pos3(&x3, &y3, &theta3);
+//
+//        beta=trajCorr(x3, y3, theta3, 500, 500);
+//        printf("%.2f, %.2f, %.2f°, beta=%f\n", x3, y3, theta3, beta*180./M_PI);
+//        move(100, beta*180./M_PI);
+//        if(((fabs(x3-500.)<10.) && (fabs(y3-500.)<10.)))
+//            {
+//            move(0,0);
+//            printf("fin\n");
+//            return 1;
+//            }
+//        }
 
 
 
 
-    move(0,0,idFicI2C);
-    sleep(1);
-    printf("d=%f\n",dist(0));
 
 
-    close(idFicI2C);
-    printf("Fermeture du bus i2c\n");
-    
-    return 0;
-    }
+//        while(1){
+//        usleep(10000);
+//    us_start = micros();
+//        nd1 = dist(1);
+//    t0 = micros() - us_start;
+//        nd2 = dist(2);
+//
+//    us_start = micros();
+//        pos(&x, &y, &theta);
+//    t1 = micros() - us_start;
+//
+//    us_start = micros();
+//        pos2(&x2, &y2, &theta2);
+//    t2 = micros() - us_start;
+//
+//    us_start = micros();
+//        pos3(&x3, &y3, &theta3);
+//    t3 = micros() - us_start;
+//
+//    //printf("%u,%u,%u,%u\n", t0, t1, t2, t3);
+//
+//    printf("%.2f, %.2f, %.2f°, %.2f, %.2f, %.2f°, %.2f, %.2f, %.2f°\n", x, y, theta*180./M_PI, x2, y2, theta2*180./M_PI, x3, y3, theta3*180./M_PI);
+//
+//    }
+//   // move(1000,0,idFicI2C);
+//
+//
+//
+//    sleep(1);
+//
+//
+//
+//
+//    move(0,0,idFicI2C);
+//    sleep(1);
+//    printf("d=%f\n",dist(0));
+//
+//
+//    close(idFicI2C);
+//    printf("Fermeture du bus i2c\n");
+//
+//    return 0;
+//    }
 
 */

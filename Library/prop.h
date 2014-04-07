@@ -14,7 +14,7 @@
 #define PRES    1.
 
 //I2C
-#define ADDR 0x58                    //Address of SFR10 (default : 0xB0 -> 0x58)
+#define ADDR_MD25 0x58
 #define FILE_I2C "/dev/i2c-1"        // default : /dev/i2c-1 on P9 with 19 : SCL and 20 : SDA
 
 //Mechanical characteristic

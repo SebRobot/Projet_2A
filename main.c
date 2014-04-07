@@ -78,7 +78,7 @@ while(1){
     printf("%.2f, %.2f, %.2f°, %.2f, %.2f, %.2f°, %.2f, %.2f, %.2f°\n", x, y, theta*180./M_PI, x2, y2, theta2*180./M_PI, x3, y3, theta3*180./M_PI);
 
     }
-   /* move(1000,0,idFicI2C);
+   // move(1000,0,idFicI2C);
 
 
 
