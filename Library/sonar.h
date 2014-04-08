@@ -19,6 +19,12 @@
 #define CHG_I2C_3  170
 
 
+int init_sonar(int idFic, char unit);
+int get_sonar(int idFic, int unit);
+
+
+char bufW;
+char bufR[4];
 
 
 #endif // SONAR_H

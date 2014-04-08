@@ -5,6 +5,7 @@
 
 
 
+
 void writeData(int fic, char *buf, int nbytes){
 	int bytes;
 
@@ -30,13 +31,17 @@ void readData(int fd, char *buf, int nbytes){
 }
 
 
+
 int setI2C(int ADDR, int fd){
+
 	 if (ioctl(fd, I2C_SLAVE, ADDR) == -1){
 		perror("Failed to acquire bus access and/or talk to slave.");
 		return(-1);
 	}
 	return 0;
 }
+
+
 
 int openI2C(void){
     int fd;
