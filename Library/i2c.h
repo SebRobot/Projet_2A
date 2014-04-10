@@ -23,7 +23,7 @@ int idFicI2C;
 
 void writeData(int fic, char *buf, int nbytes);
 void readData(int fd, char *buf, int nbytes);
-int setI2C(int ADDR, int fd);
+int setI2C(int addr, int fd);
 int openI2C(void);
 void closeI2C(int fd);
 

@@ -1,4 +1,8 @@
+//gcc -w -Wall main.c Library/i2c.c Library/i2c.h Library/prop.c Library/prop.h Library/sonar.c Library/sonar.h -lm -o test 
+
+
 #include "Library/prop.h"
+#include "Library/sonar.h"
 
 
 
@@ -14,6 +18,7 @@ int main(){
     int i=0;
 
     idFicI2C=openI2C();
+    setI2C(ADDR_MD25, idFicI2C);
 
     InitMode(3);
     InitEncoder();
@@ -24,6 +29,9 @@ int main(){
 
 while(1){
     followTraj(tabTraj[i]);
+    setI2C(ADDR_SONAR, idFicI2C);
+    printf("sonar =%d\n", get_sonar(idFicI2C, 1));
+    setI2C(ADDR_MD25, idFicI2C);
     if(i==(N-1))i=0;
     else i++;
     }

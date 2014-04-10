@@ -32,9 +32,9 @@ void readData(int fd, char *buf, int nbytes){
 
 
 
-int setI2C(int ADDR, int fd){
+int setI2C(int addr, int fd){
 
-	 if (ioctl(fd, I2C_SLAVE, ADDR) == -1){
+	 if (ioctl(fd, I2C_SLAVE, addr) == -1){
 		perror("Failed to acquire bus access and/or talk to slave.");
 		return(-1);
 	}
