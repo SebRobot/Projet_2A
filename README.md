@@ -12,3 +12,13 @@ The material used is as follows:
 - Sonar SFR10
 - MPU 9150
 - Converter 12v to 5V: TPS62112
+
+Structure of project :
+
+                   Projet_2A
+                  /          \
+       control_station       rover
+          /       \         /       \  
+         IHM     com  <->  com   hardware     
+                       |
+                 ad hoc network
