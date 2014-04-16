@@ -1,10 +1,91 @@
-//gcc -w -Wall main.c Library/i2c.c Library/i2c.h Library/prop.c Library/prop.h Library/sonar.c Library/sonar.h -lm -o test 
+//gcc -Wall main_hardware.c Library/i2c.c Library/gpio.c Library/i2c.h Library/prop.c Library/prop.h Library/sonar.c Library/sonar.h Library/gpio.h -lm -lpthread -o test
 
 
 #include "Library/prop.h"
 #include "Library/sonar.h"
+#include "Library/i2c.h"
+#include "Library/gpio.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <pthread.h>
 
+int stop=0;
+float volt;
+
+void updateLedBat(void){
+
+    //printf("tension=%f\n", volt);
+
+    if(volt > 11.5){
+        writeGPIO(GPIO_50, "low");
+        writeGPIO(GPIO_51, "high");
+        }
+    else{
+        if(volt > 11){
+            writeGPIO(GPIO_50, "high");
+            writeGPIO(GPIO_51, "high");
+            }
+        else{
+            writeGPIO(GPIO_50, "high");
+            writeGPIO(GPIO_51, "low");
+            }
+        }
+    }
+
+void *threadProp(void *param){
+    int i=0;
+
+    InitMode(3);
+    InitEncoder();
+    InitAcc(2);
+
+    while(1){
+    volt = getBatVolt();
+            if(stop==1) stopRover();
+            else{
+                if(followTraj(tabTraj[i])==1){
+                    if(i==(N-1))i=0;
+                    else i++;
+                    }
+            }
+        }
+    }
+
+void *threadGpio(void *param){
+    int etat=0;
+    int bpstop=0;
+
+    while(1){
+        bpstop=readGPIO(GPIO_60);
+        updateLedBat();
+
+        switch(etat){ 
+            case 0 : if(bpstop==0) etat=1;
+                    stop=0;
+                    break;
+            case 1 : if(bpstop==1) etat=2;
+                    stop=1; 
+                    break;
+            case 2 : if(bpstop==0) etat=3;
+                    stop=1;
+                    break;
+            case 3 : if(bpstop==1) etat=0;
+                    stop=0; 
+                    break;
+            default : printf("Error in swicth\n");
+                        getchar();
+
+            }
+
+        if(stop==0)
+        writeGPIO(GPIO_48, "low");
+        else
+        writeGPIO(GPIO_48, "high");
+
+        }
+    }
 
 
 
@@ -16,25 +97,40 @@ int main(){
     float beta;
     point pt;
     int i=0;
+    float check;
+    pthread_t pthread_prop, pthread_gpio;
 
+
+    //gpio init
+    initGPIO(GPIO_30);
+    initGPIO(GPIO_31);
+    initGPIO(GPIO_5);
+    initGPIO(GPIO_4);
+    initGPIO(GPIO_48);
+    initGPIO(GPIO_50);
+    initGPIO(GPIO_51);
+    initGPIO(GPIO_60);
+
+    //Create a thread for prop
     idFicI2C=openI2C();
     setI2C(ADDR_MD25, idFicI2C);
+    if(pthread_create(&pthread_prop, NULL, threadProp, NULL)!=0){
+         printf("ERROR; return code from pthread_create()\n");
+         getchar();
+         exit(-1);
+        }
 
-    InitMode(3);
-    InitEncoder();
-    InitAcc(2);
+    //Create a thread control gpio
+    if(pthread_create(&pthread_gpio, NULL, threadGpio, NULL)!=0){
+         printf("ERROR; return code from pthread_create()\n");
+         getchar();
+         exit(-1);
+        }
 
 
+while(1);
 
 
-while(1){
-    followTraj(tabTraj[i]);
-    setI2C(ADDR_SONAR, idFicI2C);
-    printf("sonar =%d\n", get_sonar(idFicI2C, 1));
-    setI2C(ADDR_MD25, idFicI2C);
-    if(i==(N-1))i=0;
-    else i++;
-    }
 
 
 

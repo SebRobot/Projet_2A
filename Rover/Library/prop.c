@@ -41,53 +41,6 @@
         }
 
 
-//***I2C function***//
-//    void writeData(int fic, char *buf, int nbytes){
-//        int bytes;
-//
-//	    if((bytes=write(fic, buf, nbytes)) == -1){
-//		    perror("writeData: Error while trying to write data - ");
-//	        }
-//	    else if(bytes != nbytes){
-//		    printf("Warning : Only %u bytes written out of %u requested\n", bytes, nbytes);
-//	        }
-//        }
-
-//    void readData(int fd, char *buf, int nbytes){
-//        int bytes;
-//
-//	    if((bytes = read(fd, buf, nbytes)) == -1){
-//		    perror("readData: Error while trying to read data - ");
-//	        }
-//	    else if(bytes != nbytes){
-//		    printf("Warning : Only %u bytes read out of %u requested\n", bytes, nbytes);
-//	        }
-//        }
-
-//    int openI2C(void){
-//        int fd;
-//
-//        if ((fd = open(FILE_I2C, O_RDWR)) == -1){
-//	        perror("openPort: Unable to open - ");
-//            return(-1);
-//            }
-//        else{
-//            if (ioctl(fd, I2C_SLAVE, ADDR_MD25) == -1){
-//            perror("Failed to acquire bus access and/or talk to slave.");
-//            return(-1);
-//                }
-//            }
-//        return (fd);
-//        }
-
-//    void closeI2C(int fd)
-//        {
-//	    if(close(fd) == -1){
-//		    perror("closePort: Unable to close - ");
-//	        }
-//        }
-
-
 //***Init controller***//
     void InitEncoder(void){
         char bufW[2];
@@ -110,6 +63,15 @@
         writeData(idFicI2C, bufW, 2);
         }
 
+//***Check battery***//
+    float getBatVolt(void){
+        char bufW, bufR;
+        bufW = BATTERY_VOLT;
+        sendCom(&bufW, &bufR, 1, 1, idFicI2C);
+        //writeData(idFicI2C, &bufW, 1);
+        //readData(idFicI2C, &bufR, 1);
+        return ((float) bufR)/10;
+        }
 
 //***Encoder***//
     int degreeFromInit(int mot){ 
@@ -127,9 +89,9 @@
         else{
             bufW = ENC2A;
             }
-										
-        writeData(idFicI2C, &bufW, 1);
-        readData(idFicI2C, &bufR[0], 4); 
+        sendCom(&bufW, bufR, 1, 4, idFicI2C);
+        // writeData(idFicI2C, &bufW, 1);
+        //readData(idFicI2C, &bufR[0], 4); 		
         
         d = bufR[0]<<24;
         d |= bufR[1]<<16;
@@ -186,14 +148,20 @@
 	    bufW[0] = SPEED1;						
         bufW[1] = -((char)-v);			//tan in radian			
         //printf("envoyer a prop1 : %hhi et speed=%d\n",bufW[1],speed);
-        writeData(idFicI2C, bufW, 2);	
+        sendCom(bufW, NULL, 2, 0, idFicI2C);
+        // writeData(idFicI2C, bufW, 2);
 
         bufW[0] = TURN;						
         bufW[1] =((char)turn);					
-        //printf("envoyer a prop2 : %hhi et speed=%d\n",bufW[1],turn);		
-        writeData(idFicI2C, bufW, 2);	
+        //printf("envoyer a prop2 : %hhi et speed=%d\n",bufW[1],turn);	
+        sendCom(bufW, NULL, 2, 0, idFicI2C);		
+        //writeData(idFicI2C, bufW, 2);
 
         return 0;
+        }
+
+    void stopRover(void){
+        move(0,0);
         }
 
 
@@ -363,17 +331,20 @@
 
     int followTraj(point pt){ //Warning is a block function
         float alpha, beta; // d, theta
-        int time_prev=0;
+        static int time_prev=0;
+        static int first=1;
 
         //for start with good orientation
-        nd1 = dist(1);
-        nd2 = dist(2);
-        pos3(&x_c, &y_c, &theta_c);
-        alpha=atan2(pt.x-x_c, pt.y-y_c);
-        beta=-alpha-theta_c;
-        rot3(beta*180/M_PI);
-
-        while(1){
+        if(first==1){
+            nd1 = dist(1);
+            nd2 = dist(2);
+            pos3(&x_c, &y_c, &theta_c);
+            alpha=atan2(pt.x-x_c, pt.y-y_c);
+            beta=-alpha-theta_c;
+            rot3(beta*180/M_PI);
+            first=0;
+            }
+        else{
             nd1 = dist(1);
             nd2 = dist(2);
             pos3(&x_c, &y_c, &theta_c);
@@ -393,7 +364,8 @@
 
             if(((fabs(x_c-pt.x)<1.) && (fabs(y_c-pt.y)<PRES))) //FIXME if the robot can not come
                 {
-                move(0,0);
+                stopRover();
+                first=1;
                 return 1;
                 }
             }

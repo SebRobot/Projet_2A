@@ -53,4 +53,22 @@
         extern float nd1, nd2;
         extern point tabTraj[N];
 
+//*** Déclaration ***//
+
+void InitEncoder(void);
+void InitMode(int mode);
+void InitAcc(int acc);
+float getBatVolt(void);
+int degreeFromInit(int mot);
+float dist(int mot);
+int move(int speed, int angle);
+void stopRover(void);
+void pos(float *_x, float *_y, float *_theta);
+void pos2(float *_x, float *_y, float *_theta);
+void pos3(float *_x, float *_y, float *_theta);
+void rot3(float theta);
+float trajCorr(float x, float y, float theta, float xf, float yf);
+int followTraj(point pt);
+
+
 #endif /* PROP_H_ */

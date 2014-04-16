@@ -1,13 +1,17 @@
+/*
+ * gpio.c
+ *
+ *  Created on: 15 avr. 2014
+ *      Author: Sébastien Malissard
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
 
-#define GPIO_48 "48"    //pin 15 in P9
-#define GPIO_50 "50"    //pin 14 in P9
-#define GPIO_51 "51"    //pin 16 in P9
-#define GPIO_60 "60"    //pin 12 in P9
 
 
 
@@ -84,6 +88,8 @@ int readGPIO(char *gpio){ //Only for the moment sizeof(gpio)=2
     return atoi(&ret) ;
     }
 
+
+/*
 int main(){
 
 
@@ -103,3 +109,5 @@ else     writeGPIO(GPIO_51, "high");
 
     return 1;
     }
+
+*/

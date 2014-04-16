@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "i2c.h"
 
 
-
+pthread_mutex_t mutexI2C = PTHREAD_MUTEX_INITIALIZER;
 
 void writeData(int fic, char *buf, int nbytes){
 	int bytes;
@@ -30,9 +31,28 @@ void readData(int fd, char *buf, int nbytes){
     }
 }
 
+void sendCom(char bufW[], char bufR[], int sizeW, int sizeR, int fd){
+
+   if( pthread_mutex_lock(&mutexI2C) != 0){
+        printf("Error mutex lock\n");        
+        }
+
+    if(sizeW!=0){
+        writeData(fd, bufW, sizeW);
+        }
+    if(sizeR!=0){
+        readData(fd, bufR, sizeR);
+        }
+
+   if( pthread_mutex_unlock(&mutexI2C) != 0){
+        printf("Error mutex lock\n");        
+        }
+    }
+
 
 
 int setI2C(int addr, int fd){
+
 
 	 if (ioctl(fd, I2C_SLAVE, addr) == -1){
 		perror("Failed to acquire bus access and/or talk to slave.");
