@@ -70,6 +70,12 @@ int openI2C(void){
         perror("openPort: Unable to open - ");
         return(-1);
     }
+    else{  
+    	if (ioctl(fd, I2C_SLAVE, ADDR) < 0){
+        	perror("Failed to acquire bus access and/or talk to slave.");
+        	return(-1);
+        }
+     }
     return (fd);
 }
 

@@ -13,7 +13,7 @@
 #define FILE_I2C "/dev/i2c-1"
 
 // Sensors  and register address
-#define ADDR_IMU 0x68
+#define ADDR_IMU 0x69
 
 
 

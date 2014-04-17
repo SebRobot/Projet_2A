@@ -4,21 +4,45 @@
 
 
 
-int init_sonar(int idFic, char unit){
-	bufW = unit;
-	setI2C(idFic, ADDR_SONAR);
-	writeData(idFicI2C, &bufW, 1);
-
-	return 0;
-}
 
 
-int get_sonar(int idFic, int unit){//0=inches; 1=cm; 2=us
-	int d;
-	setI2C(idFic, ADDR_SONAR);
-	readData(idFic, bufR, 2);
+int get_sonar( int unit){//0=inches; 1=cm; 2=us
+	char bufW[4];
+	char bufR[4];
+	// Open I2C
+		int idFic = openI2C(ADDR_SONAR), i, d;
+		if(idFic < 0) getchar;
+	
+	// Init sonar
+	    bufW[0] = SONAR_CMMND;						
+	    bufW[1] = SONAR_RNG_CM;						
+	    writeData(idFic, bufW, 2);					
+        usleep(80000); 
+	// Read soft version                     
+        readData(idFic, &bufR[0], 1);				                    
+    // Read unknown
+	    bufW[0] = 0x01;						
+	    writeData(idFic, bufR, 1);					
+        readData(idFic, &bufR[1], 1);						
+    // Read hight byte of range
+        bufW[0] = SONAR_RNG_H ;
+	    writeData(idFic, bufW, 1);					
+	    readData(idFic, &bufR[2], 1);						
+	// Read low byte of range
+        bufW[0] = SONAR_RNG_L;
+	    writeData(idFic, bufW, 1);					
+	    readData(idFic, &bufR[3], 1);
+	    				
+	closeI2C(idFic);
 
-	d = ((int)bufR[0] << 8) + (int) bufR[1];
+	// Calcul of range
+		d = ((int)bufR[2] << 8) + (int) bufR[3];
+
+	// Display informatons
+		for(i=0; i<4; i++){
+		printf("bufR[%d] = %d\n", i, bufR[i]);
+		}
+		printf("Range = %d\n", d);
 
 	return d;
 }
