@@ -1,10 +1,11 @@
-//gcc -Wall main_hardware.c Library/i2c.c Library/gpio.c Library/i2c.h Library/prop.c Library/prop.h Library/sonar.c Library/sonar.h Library/gpio.h -lm -lpthread -o test
+//gcc -Wall main_hardware.c Library/i2c.c Library/gpio.c Library/i2c.h Library/prop.c Library/prop.h Library/sonar.c Library/sonar.h Library/gpio.h Library/imu.h Library/imu.c -lm -lpthread -o test
 
 
 #include "Library/prop.h"
 #include "Library/sonar.h"
 #include "Library/i2c.h"
 #include "Library/gpio.h"
+#include "Library/imu.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,7 +49,7 @@ void *threadProp(void *param){
                 if(followTraj(tabTraj[i])==1){
                     if(i==(N-1))i=0;
                     else i++;
-                    }
+                }
             }
         }
     }
@@ -86,18 +87,20 @@ void *threadGpio(void *param){
 
         }
     }
+    
+
 
 
 
 int main(){
-    unsigned int us_start, t0, t1, t2, t3;
-    float x, y, theta;
-    float x2, y2, theta2;
-    float x3, y3, theta3;
-    float beta;
-    point pt;
-    int i=0;
-    float check;
+//    unsigned int us_start, t0, t1, t2, t3;
+//    float x, y, theta;
+//    float x2, y2, theta2;
+//    float x3, y3, theta3;
+//    float beta;
+//    point pt;
+//    int i=0;
+//    float check;
     pthread_t pthread_prop, pthread_gpio;
 
 
@@ -111,7 +114,7 @@ int main(){
     initGPIO(GPIO_51);
     initGPIO(GPIO_60);
 
-    //Create a thread for prop
+/*    //Create a thread for prop
     idFicI2C=openI2C();
     setI2C(ADDR_MD25, idFicI2C);
     if(pthread_create(&pthread_prop, NULL, threadProp, NULL)!=0){
@@ -126,9 +129,28 @@ int main(){
          getchar();
          exit(-1);
         }
+*/
+
+	double tab_acc[3] = {0.0, 0.0, 0.0},
+		   tab_gyro[3] = {0.0, 0.0, 0.0},
+		   tab_magn[3] = {0.0, 0.0, 0.0};
+	int i;
 
 
-while(1);
+	mpu_init();
+
+while(1){
+	mpu_read(tab_acc, tab_gyro, tab_magn);
+	printf("\n");
+	for(i=0; i<3; i++) printf("tab_acc[%d] = %.2lf\n", i, tab_acc[i]);
+	printf("\n");
+	for(i=0; i<3; i++) printf("tab_gyro[%d] = %.2lf\n", i, tab_gyro[i]);
+	printf("\n");
+	for(i=0; i<3; i++) printf("tab_magn[%d] = %.2lf\n", i,  tab_magn[i]);
+	printf("\n\n");
+
+	printf("Distance = %d\n\n", sonar_get_distance_cm());
+}
 
 
 

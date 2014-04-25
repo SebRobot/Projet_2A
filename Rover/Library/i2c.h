@@ -25,7 +25,7 @@ void writeData(int fic, char *buf, int nbytes);
 void readData(int fd, char *buf, int nbytes);
 void sendCom(char bufW[], char bufR[], int sizeW, int sizeR, int fd);
 int setI2C(int addr, int fd);
-int openI2C(void);
+int openI2C(char* ADDR);
 void closeI2C(int fd);
 
 #endif // I2C_H

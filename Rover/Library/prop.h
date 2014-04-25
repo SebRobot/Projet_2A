@@ -47,6 +47,7 @@
         float x;
         float y;
         }point;
+        
 
         extern int idFicI2C;
         extern float x_c, y_c, theta_c;

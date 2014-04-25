@@ -27,18 +27,17 @@
         };
 
 
-
 //***Times function***//
     unsigned int micros(){
         struct timeval clock;
         gettimeofday(&clock,NULL);
         return clock.tv_usec + clock.tv_sec*1000000;
-        }
+    }
     unsigned int millis(){
         struct timeval clock;
         gettimeofday(&clock,NULL);
         return clock.tv_usec/1000 + clock.tv_sec*1000;
-        }
+    }
 
 
 //***Init controller***//
@@ -47,21 +46,21 @@
         bufW[0]= COMMAND;
         bufW[1]=0x20;
         writeData(idFicI2C, bufW, 2);
-        }
+    }
 
     void InitMode(int mode){
         char bufW[2];
         bufW[0]= MODE;
         bufW[1]=mode;
         writeData(idFicI2C, bufW, 2);
-        }
+    }
 
     void InitAcc(int acc){
         char bufW[2];
         bufW[0]= ACCELERATION_RATE;
         bufW[1]=acc;
         writeData(idFicI2C, bufW, 2);
-        }
+    }
 
 //***Check battery***//
     float getBatVolt(void){
@@ -71,7 +70,7 @@
         //writeData(idFicI2C, &bufW, 1);
         //readData(idFicI2C, &bufR, 1);
         return ((float) bufR)/10;
-        }
+    }
 
 //***Encoder***//
     int degreeFromInit(int mot){ 
@@ -99,10 +98,10 @@
         d |= bufR[3];
 
         return d ; //1 tour = 360°
-        }
+   }
 
     float dist(int mot){ //0 is dist robot
-        int d;
+       int d;
 
        if((mot != 0) && (mot != 1) && (mot != 2)){
             printf("Error : mot must be 1 or 2, current mot is : %d\n", mot);
@@ -124,7 +123,7 @@
             }
 
         return (-M_PI*RADIUS_WHEEL*d/180.);//in mm
-        }
+    }
 
 
 //***Move function direct ***//
@@ -158,7 +157,7 @@
         //writeData(idFicI2C, bufW, 2);
 
         return 0;
-        }
+   }
 
     void stopRover(void){
         move(0,0);
@@ -248,7 +247,7 @@
 
         d1 = nd1;
         d2 = nd2;
-        }
+    }
 
 //***Rotation on the spot***//
     void rot3(float theta){ //Warning : rot is a block function
@@ -275,7 +274,7 @@
             else move(0, -45);
             }
         move(0,0);
-        }
+    }
 /*  void rot(int speed, int theta){ //rot without asser
         float time;
         struct timeval temp, temp2;
@@ -329,6 +328,8 @@
         return -alpha-theta;
         }
 
+
+
     int followTraj(point pt){ //Warning is a block function
         float alpha, beta; // d, theta
         static int time_prev=0;
@@ -370,7 +371,9 @@
                 }
             }
         return 0;
-        }
+    }
+
+
 
 
 /*

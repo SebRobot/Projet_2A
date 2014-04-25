@@ -63,7 +63,7 @@ int setI2C(int addr, int fd){
 
 
 
-int openI2C(void){
+int openI2C(char* ADDR){
     int fd;
 
     if ((fd = open(FILE_I2C, O_RDWR)) == -1){
@@ -85,4 +85,5 @@ void closeI2C(int fd){
 	if(close(fd) == -1){
         perror("closePort: Unable to close - ");
     }
+    fd = -1;
 }
