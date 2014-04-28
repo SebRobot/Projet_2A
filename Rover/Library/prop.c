@@ -16,7 +16,7 @@
 
 
 //***Declaration***//
-    int idFicI2C; 
+    int idFicI2C = -1; 
     float x_c=0., y_c=0., theta_c=0.;
     float nd1=0., nd2=0.;
     point tabTraj[N]={
@@ -24,7 +24,7 @@
         {500., 500.},
         {  0., 500.},
         {  0.,   0.},
-        };
+    };
 
 
 //***Times function***//
@@ -64,11 +64,15 @@
 
 //***Check battery***//
     float getBatVolt(void){
+    	// Open bus I2C
+			if(idFicI2C < 0) idFicI2C = openI2C((char*)ADDR_MD25);
+		// Read tenson	
         char bufW, bufR;
         bufW = BATTERY_VOLT;
         sendCom(&bufW, &bufR, 1, 1, idFicI2C);
         //writeData(idFicI2C, &bufW, 1);
         //readData(idFicI2C, &bufR, 1);
+        
         return ((float) bufR)/10;
     }
 
@@ -250,7 +254,7 @@
     }
 
 //***Rotation on the spot***//
-    void rot3(float theta){ //Warning : rot is a block function
+    void rotOnPt(float theta){ //Warning : rot is a block function
         float theta_start; // d=0, d1, d2, r
         
         printf("theta ask =%f, ",theta);
@@ -342,9 +346,9 @@
             pos3(&x_c, &y_c, &theta_c);
             alpha=atan2(pt.x-x_c, pt.y-y_c);
             beta=-alpha-theta_c;
-            rot3(beta*180/M_PI);
+            rotOnPt(beta*180/M_PI);
             first=0;
-            }
+        }
         else{
             nd1 = dist(1);
             nd2 = dist(2);
@@ -360,16 +364,15 @@
             if((millis()-time_prev)>100){
                 time_prev=millis();
                 printf("x_c=%f, y_c=%f, theta_c=%f, beta=%f, x_obj=%f, y_obj=%f\n",x_c,y_c,theta_c,beta,pt.x,pt.y);
-                }
+            }
             move(SPEED, beta);
 
-            if(((fabs(x_c-pt.x)<1.) && (fabs(y_c-pt.y)<PRES))) //FIXME if the robot can not come
-                {
+            if(((fabs(x_c-pt.x)<1.) && (fabs(y_c-pt.y)<PRES))){ //FIXME if the robot can not come
                 stopRover();
                 first=1;
                 return 1;
-                }
-            }
+             }
+        }
         return 0;
     }
 

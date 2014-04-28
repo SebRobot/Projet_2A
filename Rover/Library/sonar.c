@@ -15,7 +15,7 @@ int get_sonar( int unit){//0=inches; 1=cm; 2=us
 	int d, idFic; // openI2C(ADDR_SONAR),
 	
 	// Open I2C and acces to sonar
-		idFic = openI2C(ADDR_I2C_SONAR);
+		idFic = openI2C((char*)ADDR_I2C_SONAR);
 		if(idFic < 0) perror("Error in function ""openI2C()"":");
 			    
 	// Init sonar
@@ -63,7 +63,7 @@ int sonar_get_distance_cm(void){
 	int d, idFic;
 
 	// Open I2C and acces to sonar
-		idFic = openI2C(ADDR_I2C_SONAR);
+		idFic = openI2C((char*)ADDR_I2C_SONAR);
 		if(idFic < 0) perror("Error in function ""openI2C()"":");
 
 	// Init sonar

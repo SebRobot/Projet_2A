@@ -26,7 +26,7 @@ void mpu_init(void){
 	
 	// Init Accel and Gyro
 		// Open I2C an acces to Accel and Gyro 
-			idFic = openI2C(ADDR_I2C_IMU);
+			idFic = openI2C((char*)ADDR_I2C_IMU);
 			printf("idFic mpu_init = %d\n", idFic);
 			if(idFic < 0) perror("Error in function ""openI2C()"" to acces accelerometer and gyrometer:");
  			 
@@ -77,7 +77,7 @@ void mpu_init(void){
 			
 	// Init Magnetometer
 		// Acces to magnetometer 
-    		  idFic = openI2C(MPU_MAGN_ADDRESS);
+    		  idFic = openI2C((char*)MPU_MAGN_ADDRESS);
 printf("idFic mpu_init acces magn = %d\n", idFic);
 			  if(idFic < 0) perror("Error in function ""mpu_init()"" to acces magnetometer:");
 		

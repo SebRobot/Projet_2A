@@ -13,6 +13,9 @@
 #include <string.h>
 
 
+#include "gpio.h"
+
+
 
 
 int initGPIO(char *gpio){ //Use the define example : GPIO_50 for "50" ; Warning : example gpio1[28] = 1*32 + 28 = 60
@@ -46,20 +49,19 @@ int writeGPIO(char *gpio, char *state){ //Only for the moment sizeof(gpio)=2
     if((pFile=fopen(path, "w"))==NULL){
         perror("Error opening file in writeGPIO\n");
         return -1;
-        }   
-
+    }   
     if(fwrite (state , sizeof(char), sizeof(state), pFile)!=sizeof(state)){
         printf("Warning : miss write char\n");
-        }
+    }
     if(ferror(pFile)){
         printf("Error writing to file in writeGPIO\n");
         return -1;
-        }
+    }
  
     fclose(pFile);
 
     return 0 ;
-    }
+}
 
 int readGPIO(char *gpio){ //Only for the moment sizeof(gpio)=2
     FILE * pFile;
@@ -73,21 +75,23 @@ int readGPIO(char *gpio){ //Only for the moment sizeof(gpio)=2
     if((pFile=fopen(path, "r"))==NULL){
         perror("Error opening file in writeGPIO\n");
         return -1;
-        }   
-
+    }   
     if(fread (&ret , sizeof(char), sizeof(char), pFile)!=sizeof(char)){
         printf("Warning : miss write char\n");
-        }
+    }
     if(ferror(pFile)){
         printf("Error reading to file in readGPIO\n");
         return -1;
-        }
- 
+    }
     fclose(pFile);
 
     return atoi(&ret) ;
-    }
+}
 
+
+void alert(void){
+	writeGPIO(GPIO_48, "high");
+}
 
 /*
 int main(){

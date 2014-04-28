@@ -55,7 +55,8 @@
         extern point tabTraj[N];
 
 //*** Déclaration ***//
-
+unsigned int micros();
+unsigned int millis();
 void InitEncoder(void);
 void InitMode(int mode);
 void InitAcc(int acc);
@@ -67,7 +68,7 @@ void stopRover(void);
 void pos(float *_x, float *_y, float *_theta);
 void pos2(float *_x, float *_y, float *_theta);
 void pos3(float *_x, float *_y, float *_theta);
-void rot3(float theta);
+void rotOnPt(float theta);
 float trajCorr(float x, float y, float theta, float xf, float yf);
 int followTraj(point pt);
 

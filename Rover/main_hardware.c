@@ -1,6 +1,8 @@
 //gcc -Wall main_hardware.c Library/i2c.c Library/gpio.c Library/i2c.h Library/prop.c Library/prop.h Library/sonar.c Library/sonar.h Library/gpio.h Library/imu.h Library/imu.c -lm -lpthread -o test
 
 
+
+
 #include "Library/prop.h"
 #include "Library/sonar.h"
 #include "Library/i2c.h"
@@ -13,27 +15,40 @@
 #include <pthread.h>
 
 int stop=0;
-float volt;
+float volt = -1;
+
+
 
 void updateLedBat(void){
-
-    //printf("tension=%f\n", volt);
-
-    if(volt > 11.5){
-        writeGPIO(GPIO_50, "low");
-        writeGPIO(GPIO_51, "high");
-        }
-    else{
-        if(volt > 11){
-            writeGPIO(GPIO_50, "high");
-            writeGPIO(GPIO_51, "high");
-            }
+	static int time1 = 0, state_led_red = 1;
+	static int time0 = -1;
+	if(time0 < 0) time0 = millis(); 
+	if((time1 - time0) > 1000){
+		time0 = time1;
+	    printf("Battery's tension = %.1lf V\n", volt);
+		if(volt > 11.5){
+		    writeGPIO(GPIO_50, "high");
+		    writeGPIO(GPIO_51, "low");
+		}
         else{
-            writeGPIO(GPIO_50, "high");
-            writeGPIO(GPIO_51, "low");
-            }
-        }
-    }
+		    if(volt > 10.5){
+		        writeGPIO(GPIO_50, "high");
+		        writeGPIO(GPIO_51, "high");
+		    }
+		    else{
+		    	switch(state_led_red){
+		    		case 0 : writeGPIO(GPIO_51, "low"); state_led_red = 1; break;
+				    case 1 : writeGPIO(GPIO_51, "high"); state_led_red = 0; break; 
+				    default : alert(); perror("Error in funcion ""updateLedBat"" for state_led_red"); break;
+				}
+				writeGPIO(GPIO_50, "low");
+		    }
+		}
+	}
+	time1 = millis();
+}
+
+
 
 void *threadProp(void *param){
     int i=0;
@@ -43,16 +58,16 @@ void *threadProp(void *param){
     InitAcc(2);
 
     while(1){
-    volt = getBatVolt();
-            if(stop==1) stopRover();
-            else{
-                if(followTraj(tabTraj[i])==1){
-                    if(i==(N-1))i=0;
-                    else i++;
-                }
+    	volt = getBatVolt();
+        if(stop==1) stopRover();
+        else{
+            if(followTraj(tabTraj[i])==1){
+                if(i==(N-1))i=0;
+                else i++;
             }
         }
     }
+}
 
 void *threadGpio(void *param){
     int etat=0;
@@ -60,25 +75,26 @@ void *threadGpio(void *param){
 
     while(1){
         bpstop=readGPIO(GPIO_60);
-        updateLedBat();
+//        volt = getBatVolt();
+//        updateLedBat();
+
 
         switch(etat){ 
             case 0 : if(bpstop==0) etat=1;
-                    stop=0;
-                    break;
+                     stop=0;
+                     break;
             case 1 : if(bpstop==1) etat=2;
-                    stop=1; 
-                    break;
+                     stop=1; 
+                     break;
             case 2 : if(bpstop==0) etat=3;
-                    stop=1;
-                    break;
+                     stop=1;
+                     break;
             case 3 : if(bpstop==1) etat=0;
-                    stop=0; 
-                    break;
+                     stop=0; 
+                     break;
             default : printf("Error in swicth\n");
-                        getchar();
-
-            }
+                      getchar();
+        }
 
         if(stop==0)
         writeGPIO(GPIO_48, "low");
@@ -86,9 +102,14 @@ void *threadGpio(void *param){
         writeGPIO(GPIO_48, "high");
 
         }
-    }
+}
     
-
+void *threadBattery(void* param){
+	while(1){
+		volt = getBatVolt();
+    	updateLedBat();
+	}
+}
 
 
 
@@ -101,19 +122,21 @@ int main(){
 //    point pt;
 //    int i=0;
 //    float check;
-    pthread_t pthread_prop, pthread_gpio;
+    pthread_t pthread_prop, pthread_gpio, pthread_battery;
 
 
     //gpio init
-    initGPIO(GPIO_30);
-    initGPIO(GPIO_31);
-    initGPIO(GPIO_5);
-    initGPIO(GPIO_4);
-    initGPIO(GPIO_48);
-    initGPIO(GPIO_50);
-    initGPIO(GPIO_51);
-    initGPIO(GPIO_60);
+		initGPIO(GPIO_30);
+		initGPIO(GPIO_31);
+		initGPIO(GPIO_5);
+		initGPIO(GPIO_4);
+		initGPIO(GPIO_48);
+		initGPIO(GPIO_50);
+		initGPIO(GPIO_51);
+		initGPIO(GPIO_60);
 
+
+    
 /*    //Create a thread for prop
     idFicI2C=openI2C();
     setI2C(ADDR_MD25, idFicI2C);
@@ -122,25 +145,33 @@ int main(){
          getchar();
          exit(-1);
         }
-
+*/
     //Create a thread control gpio
     if(pthread_create(&pthread_gpio, NULL, threadGpio, NULL)!=0){
          printf("ERROR; return code from pthread_create()\n");
          getchar();
          exit(-1);
         }
-*/
+        
+    //Create a thread control gpio
+    if(pthread_create(&pthread_battery, NULL, threadBattery, NULL)!=0){
+         printf("ERROR; return code from pthread_create()\n");
+         getchar();
+         exit(-1);
+        }
 
-	double tab_acc[3] = {0.0, 0.0, 0.0},
+
+/*	double tab_acc[3] = {0.0, 0.0, 0.0},
 		   tab_gyro[3] = {0.0, 0.0, 0.0},
 		   tab_magn[3] = {0.0, 0.0, 0.0};
 	int i;
+*/
 
-
-	mpu_init();
+//	mpu_init();
 
 while(1){
-	mpu_read(tab_acc, tab_gyro, tab_magn);
+
+/*	mpu_read(tab_acc, tab_gyro, tab_magn);
 	printf("\n");
 	for(i=0; i<3; i++) printf("tab_acc[%d] = %.2lf\n", i, tab_acc[i]);
 	printf("\n");
@@ -150,6 +181,8 @@ while(1){
 	printf("\n\n");
 
 	printf("Distance = %d\n\n", sonar_get_distance_cm());
+*/	
+	
 }
 
 
