@@ -9,5 +9,8 @@ int enterChar(int nb, char *ret);
 int addRobot(void);
 int selectRobot(void);
 void menu(int num);
+void displayRobot(void);
+void sendPoint(int num);
+void rmRobot(int id);
 
 #endif

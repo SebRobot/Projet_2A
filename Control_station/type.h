@@ -11,16 +11,18 @@ typedef enum {READ, WRITE} eRW;
 typedef struct{
     float x;
     float y;
-    }sPt;
+    } sPt;
 
-typedef struct{
+typedef struct {
     eLoc loc;
     int num;
+    char ip[20];
+    int sock;
     int date;
     float bat;
     sPt pos;
     float son;
     eState state;
-    }listRobot;
+    } infoRobot;
 
 #endif

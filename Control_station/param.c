@@ -7,12 +7,12 @@
 
 #include "type.h"
 
-listRobot robot[NB_ROBOT];
+infoRobot robot[NB_ROBOT];
 
 pthread_mutex_t mutexRWrobot = PTHREAD_MUTEX_INITIALIZER;
 
-int rwRobot(eRW rw, listRobot *p){
-    
+int rwRobot(eRW rw, int num, infoRobot *p){ //TODO dvp pour changer que certain parametre
+
     if(p == NULL){
         return -1;
         }
@@ -24,10 +24,10 @@ int rwRobot(eRW rw, listRobot *p){
     //TODO vérifier si les donées sont valide
     switch(rw){
         case READ:
-            *p = robot[p->num]; 
+            *p = robot[num]; 
             break;
         case WRITE:
-            robot[p->num] = *p;
+            robot[num] = *p;
             break;
         default:
             return -1;
