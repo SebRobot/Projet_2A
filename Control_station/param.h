@@ -9,6 +9,8 @@
 #define PORT     5000
 #define IP       "127.0.0.1"
 
+#define SIZE_MESSAGE_CONSOLE 256
+
 
 //TODO sous forme d'un fichier de routage
 #define IP_ROBOT_1   "127.0.0.1"
@@ -20,6 +22,7 @@
 
 
 extern infoRobot robot[];
+extern int pipeConsole;
 
 int rwRobot(eRW rw, int num, infoRobot *p);
 

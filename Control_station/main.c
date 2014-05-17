@@ -1,4 +1,4 @@
-//gcc -pthread main.c menu.c menu.h param.c param.h type.h -o test
+//gcc -pthread main.c menu.c menu.h param.c param.h type.h com.c com.h -o test
 //by Sébastien Malissard
 
 
@@ -8,15 +8,20 @@
 #include <pthread.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
 #include <arpa/inet.h> 
+#include <fcntl.h>
+
+
 
 #include "menu.h"
 #include "type.h"
 #include "param.h"
+#include "tools.h"
 #include "com.h"
 #include "../typeMessage.h"
 
@@ -95,12 +100,6 @@ void *mainIhm(void* arg){
     pthread_exit(NULL);
     }
 
-void *mainComRecv(void* arg){
-    
-    pthread_exit(NULL);
-    }
-
-
 void *mainComSend(void* arg){
 /*    sMsg msgOut;
 
@@ -117,36 +116,54 @@ void *mainComSend(void* arg){
 
 int main(void){
     pthread_t th1, th2, th3;
+	char namePipe[] = "essai.fifo";
+    int id, fd;
 
-   /* if((sock = initCom(IP)) < 0){
-        return 0; //FIXME
-        }
-    robot[1].loc = ACTIVE;
-    robot[1].sock = sock;
-*/
+    id = fork();
 
-    if(pthread_create(&th1, NULL, mainIhm, NULL) == -1){
-    	perror("pthread_create 1\n");
-        return -1;
-        }
-    if(pthread_create(&th3, NULL, mainComSend, NULL) == -1){
-    	perror("pthread_create 3\n");
-        return -1;
+    if(id == 0){ //child processus
+       execlp("gnome-terminal", "./gnome-terminal", "-e", "/home/seb/RobotOfficiel/Projet_2A/Control_station/console essai.fifo", NULL); //FIXME
         }
 
-    if (pthread_join(th1, NULL)) {
-	    perror("pthread_join\n");
-	    return -1;
-        }
-    if (pthread_join(th2, NULL)) {
-	    perror("pthread_join\n");
-	    return -1;
-        }
-    if (pthread_join(th3, NULL)) {
-	    perror("pthread_join\n");
-	    return -1;
-        }
+    else{ //father processus
 
+        remove(namePipe);
+
+	    if(mkfifo(namePipe, 0644) != 0) {
+		    perror("Error to create the named pipe ");
+		    exit(EXIT_FAILURE);
+	        }
+
+	    if((pipeConsole = open(namePipe, O_WRONLY)) == -1){
+		    perror("Error to open the named pipe ");
+		    exit(EXIT_FAILURE);
+	        }
+
+        printConsole("Bienvenue sur la console de supervision des messages\n\n");
+
+
+        if(pthread_create(&th1, NULL, mainIhm, NULL) == -1){
+        	perror("pthread_create 1\n");
+            return -1;
+            }
+        if(pthread_create(&th3, NULL, mainComSend, NULL) == -1){
+        	perror("pthread_create 3\n");
+            return -1;
+            }
+
+        if (pthread_join(th1, NULL)) {
+	        perror("pthread_join\n");
+	        return -1;
+            }
+
+        printConsole("exit\n");
+
+        if (pthread_join(th3, NULL)) {
+	        perror("pthread_join\n");
+	        return -1;
+            }
+
+    }
 
     return 1;
     }

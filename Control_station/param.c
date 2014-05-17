@@ -2,43 +2,10 @@
 
 #include "param.h"
 
-#include <stdio.h>
-#include <pthread.h>
-
 #include "type.h"
 
 infoRobot robot[NB_ROBOT];
+int pipeConsole = 0;
 
-pthread_mutex_t mutexRWrobot = PTHREAD_MUTEX_INITIALIZER;
-
-int rwRobot(eRW rw, int num, infoRobot *p){ //TODO dvp pour changer que certain parametre
-
-    if(p == NULL){
-        return -1;
-        }
-
-   if( pthread_mutex_lock(&mutexRWrobot) != 0){
-        printf("Error mutex lock\n");        
-        }
-
-    //TODO vérifier si les donées sont valide
-    switch(rw){
-        case READ:
-            *p = robot[num]; 
-            break;
-        case WRITE:
-            robot[num] = *p;
-            break;
-        default:
-            return -1;
-            break;
-        }
-
-   if( pthread_mutex_unlock(&mutexRWrobot) != 0){
-        printf("Error mutex lock\n");        
-        }
-
-    return 1;
-    }
 
 
