@@ -124,22 +124,28 @@ void sendPoint(int num){
     }
 
 void menu(int num){
-    printf("\nMenu\n");
-    printf("| -s Sélectionner un robot\n");
-    printf("| -a Ajouter un robot\n");
-    printf("| -l Afficher la liste des robots\n"); //TODO
-    printf("| -c Afficher les messages de communication\n"); //TODO
-    printf("| -q Quitter\n");
+    printf("\033[1;4;31m");
+    printf("\nMENU\n");
+    printf("\033[0m");
+
+
+    printf("|\033[1m s \033[0m: Sélectionner un robot\n");
+    printf("|\033[1m a \033[0m: Ajouter un robot\n");
+    printf("|\033[1m l \033[0m: Afficher la liste des robots\n"); //TODO
+    printf("|\033[1m c \033[0m: Afficher les messages de communication\n"); //TODO
+    printf("|\033[1m q \033[0m: Quitter\n");
 
     if(num != 0){
         printf("|\n");
         printf("| Robot n°%d sélectionné :\n", num);
-        printf("|     -i Informations\n");
-        printf("|     -e Envoyer un point de destination\n");
-        printf("|     -n Associer un nom\n");
-        printf("|     -r Supprimer\n");
-        printf("|     -d Déselectionner\n");
+        printf("|\033[1m     i \033[0m: Informations\n");
+        printf("|\033[1m     e \033[0m: Envoyer un point de destination\n");
+        printf("|\033[1m     n \033[0m: Associer un nom\n");
+        printf("|\033[1m     r \033[0m: Supprimer\n");
+        printf("|\033[1m     d \033[0m: Déselectionner\n");
         }
 
+    printf("\033[32m");
     printf("Choix : ");    
+    printf("\033[0m");
     }
