@@ -7,5 +7,9 @@
 
 void printConsole(char *msg);
 int rwRobot(eRW rw, int num, infoRobot *p);
+void wait(void);
+int enterString(int nb, char *ret);
+int enterNum(void);
+int enterIP(char *ip);
 
 #endif

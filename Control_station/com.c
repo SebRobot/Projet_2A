@@ -1,7 +1,9 @@
 //by Sébastien Malissard
 
 #include "com.h"
+
 #include "param.h"
+#include "tools.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,7 +61,7 @@ int senMsg(const int num, const sMsg *msg){ //num -> listRobot
     rwRobot(READ, num, &rob);
     
     if(send(rob.sock, msg, sizeof(*msg), 0) < -1){
-        printf("Error message not send\n");
+        printConsole("Error message not send\n");
         return -1;   
         }
 
@@ -81,7 +83,7 @@ void *moniRecv(void *socket){ //monitoring the receive buffer
                 
                 break;
             default :
-                printf("Error : type of message unknown\n");
+                printConsole("Error : type of message unknown\n");
                 break;
             }
         }
@@ -95,14 +97,14 @@ void saveHistMsg(eTypeMsg type, eSendRecv sr){
     switch(type){
         case CMD :
             stType = "CMD";
-            printf("Un message de type CMD reçue\n");
+            printConsole("Un message de type CMD reçue\n");
             break;
         case INFO :
             stType = "INFO";
-            printf("Un message de type INFO reçue\n");
+            printConsole("Un message de type INFO reçue\n");
             break;
         default:
-            printf("Error in switch type\n");
+            printConsole("Error in switch type\n");
         }
 
     switch(sr){

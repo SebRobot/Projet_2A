@@ -18,7 +18,7 @@ int main(int argc, char *argv[]){
         }
 
 	if((pipeOutput = open (argv[1], O_RDONLY)) == -1) {
-		perror("Impossible to open the output of named pipe");
+		perror("Error to open the output of named pipe");
         getchar();
 		exit(EXIT_FAILURE);
 	    }

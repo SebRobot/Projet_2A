@@ -8,6 +8,8 @@
 
 #include "type.h"
 #include "param.h"
+#include "tools.h"
+#include "com.h"
 #include "../typeMessage.h"
 
 
@@ -27,106 +29,26 @@ void init(void){
     printf("\nInformation : Le nombre de robots maximal est de : %d\n\n", NB_ROBOT);
     }
 
-void wait(void){
-    printf("Appuyer sur une touche pour continuer\n");
-    getchar();
-    }
-
-int enterChar(int nb, char *ret){
-    char s[64] = {0};
-    int i;
-
-    if(nb > 63){
-        return -1;
-        }
-
-    fgets(s, 64, stdin);
-
-    if(strlen(s) > nb + 1){
-        printf("Erreur de syntaxe\n\n");
-        printf("Appuyer sur une touche pour continuer\n");
-        while(getchar()!='\n');
-        return -1;
-        }
-
-    for(i = 0 ; i < nb ; i++){
-        ret[i] = s[i]; 
-        }
-
-    return 1;
-    }
-
-int enterIP(char *ip){
-    char s[64] = {0};
-    int i, j;
-
-    printf("Saisir l'adresse ip : ");
-
-    fgets(s, 64, stdin);
-
-    if(strlen(s) > 64){
-        printf("Erreur de syntaxe\n\n");
-        printf("Appuyer sur une touche pour continuer\n");
-        while(getchar()!='\n');
-        return -1;
-        }
-
-
-    for(i = 0 ; i < strlen(s) - 1; i++){
-        if( (s[i] >= '0' && s[i] <= '9') || (s[i] == '.') ){ //TODO a améliorer
-            ip[i] = s[i] ;
-            }
-        else{
-            printf("Erreur de syntax\n");
-            printf("Appuyer sur une touche pour continuer\n");
-            return -1;
-            }
-        }
-
-
-    return 1;
-    }
-
-int enterNum(void){
-    char s[64] = {0};
-    int i, ret;
-
-    printf("Saisir un nombre : \n");
-    fgets(s, 64, stdin);
-
-    if(strlen(s) > 64){
-        printf("Erreur de syntaxe\n\n");
-        printf("Appuyer sur une touche pour continuer\n");
-        while(getchar()!='\n');
-        return -1;
-        }
-
-    //FIXME verifier l'information
-
-    ret = atoi(s);
-
-    return ret;
-    }
 
 int addRobot(void){
     int ret = 0;
-    char c, *ip;
+    char *ip;
     infoRobot rob;
 
     printf("Saisir le numéro : ");
-    enterChar(1, &c);
-    if( c >= '0' && c <= '9'){
-        ret = c - '0';
-        }
-    else{
-        printf("Erreur de syntax\n");
+    ret = enterNum();
+    if(ret > 9){
+        printf("Le nombre doit etre compris entre 0 et 9\n");
         return -1;
         }
 
     rwRobot(READ, ret, &rob);
 
+    printf("Saisir l'adresse ip : ");
     ip = &rob.ip[0];
-    enterIP(ip);
+    if(enterIP(ip) == -1){
+        return -1;
+        }
     rob.loc = ACTIVE;
     rob.num = ret;
 
@@ -151,7 +73,7 @@ int selectRobot(void){
     char c;
     
     printf("Saisir le numéro : "); //TODO more 10 robots
-    enterChar(1, &c);
+    enterString(1, &c);
     if( c >= '0' && c <= '9'){
         ret = c - '0';
         }

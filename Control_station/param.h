@@ -9,7 +9,8 @@
 #define PORT     5000
 #define IP       "127.0.0.1"
 
-#define SIZE_MESSAGE_CONSOLE 256
+#define SIZE_MESSAGE_CONSOLE    256
+#define SIZE_CHAR_KEYBOARD      64
 
 
 //TODO sous forme d'un fichier de routage

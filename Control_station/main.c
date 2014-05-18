@@ -1,4 +1,4 @@
-//gcc -pthread main.c menu.c menu.h param.c param.h type.h com.c com.h -o test
+//gcc -pthread main.c menu.c menu.h param.c param.h type.h com.c com.h tools.c tools.h -o test -Wall
 //by Sébastien Malissard
 
 
@@ -31,7 +31,7 @@ pthread_mutex_t mutexSocket = PTHREAD_MUTEX_INITIALIZER;
 void *mainIhm(void* arg){
 
     int shut_down = 0;
-    int temp, select = 0;
+    int temp, select = 0, ret;
     char c;
 
     init();
@@ -39,10 +39,18 @@ void *mainIhm(void* arg){
 
     while(!shut_down){
 
-        menu(select);
-        printf("\n");
+        if(c != '\n'){
+            menu(select);
+            }
 
-        if(enterChar(1, &c) == -1){
+        ret = enterString(1, &c);
+        
+        if(ret == -1){
+            continue;
+            }
+
+        if(ret == 0){
+            c = '\n';
             continue;
             }
 
@@ -95,6 +103,7 @@ void *mainIhm(void* arg){
                 printf("Choix invalide\n");
                 break;
             }
+
         }
 
     pthread_exit(NULL);
@@ -115,9 +124,9 @@ void *mainComSend(void* arg){
 
 
 int main(void){
-    pthread_t th1, th2, th3;
+    pthread_t th1, th3;
 	char namePipe[] = "essai.fifo";
-    int id, fd;
+    int id;
 
     id = fork();
 
