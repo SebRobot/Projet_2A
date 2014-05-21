@@ -11,6 +11,7 @@
 #include "tools.h"
 #include "com.h"
 #include "../typeMessage.h"
+#include "Library/formatting_text.h"
 
 
 void init(void){
@@ -23,8 +24,8 @@ void init(void){
             }
         }
 
-    printf("\n------------ Bienvenue ! -------------\n");
-    printf("par Sébastien MALISSARD & Yoann SOLANA\n");
+    printf(EF_BOLT BG_RED"\n---------------- Bienvenue ! -----------------" DEFAULT "\n");
+    printf(EF_BOLT "par Sébastien MALISSARD & Yoann SOLANA\n" DEFAULT);
     printf("version 1.0 : 05/2014\n");
     printf("\nInformation : Le nombre de robots maximal est de : %d\n\n", NB_ROBOT);
     }
@@ -124,28 +125,24 @@ void sendPoint(int num){
     }
 
 void menu(int num){
-    printf("\033[1;4;31m");
-    printf("\nMENU\n");
-    printf("\033[0m");
+    printf(EF_BOLT EF_UNLINE TXT_RED"\nMENU\n" DEFAULT);
 
 
-    printf("|\033[1m s \033[0m: Sélectionner un robot\n");
-    printf("|\033[1m a \033[0m: Ajouter un robot\n");
-    printf("|\033[1m l \033[0m: Afficher la liste des robots\n"); //TODO
-    printf("|\033[1m c \033[0m: Afficher les messages de communication\n"); //TODO
-    printf("|\033[1m q \033[0m: Quitter\n");
+    printf("|"EF_BOLT" s "DEFAULT": Sélectionner un robot\n");
+    printf("|"EF_BOLT" a "DEFAULT": Ajouter un robot\n");
+    printf("|"EF_BOLT" l "DEFAULT": Afficher la liste des robots\n"); //TODO
+    printf("|"EF_BOLT" c "DEFAULT": Afficher les messages de communication\n"); //TODO
+    printf("|"EF_BOLT" q "DEFAULT": Quitter\n");
 
     if(num != 0){
         printf("|\n");
         printf("| Robot n°%d sélectionné :\n", num);
-        printf("|\033[1m     i \033[0m: Informations\n");
-        printf("|\033[1m     e \033[0m: Envoyer un point de destination\n");
-        printf("|\033[1m     n \033[0m: Associer un nom\n");
-        printf("|\033[1m     r \033[0m: Supprimer\n");
-        printf("|\033[1m     d \033[0m: Déselectionner\n");
+        printf("|"EF_BOLT"     i "DEFAULT": Informations\n");
+        printf("|"EF_BOLT"     e "DEFAULT": Envoyer un point de destination\n");
+        printf("|"EF_BOLT"     n "DEFAULT": Associer un nom\n");
+        printf("|"EF_BOLT"     r "DEFAULT": Supprimer\n");
+        printf("|"EF_BOLT"     d "DEFAULT": Déselectionner\n");
         }
 
-    printf("\033[32m");
-    printf("Choix : ");    
-    printf("\033[0m");
+    printf(TXT_GREEN "Choix : " DEFAULT);    
     }
