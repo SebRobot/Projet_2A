@@ -29,5 +29,8 @@
 #define EF_REVERSE  "\033[7m" //change color text to background and color background to text
 
 
+void printCenter(char *txt, int nb);
+void printLeft(char *txt, int nb);
+
 #endif
 

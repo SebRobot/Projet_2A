@@ -1,4 +1,4 @@
-//gcc -pthread main.c menu.c menu.h param.c param.h type.h com.c com.h tools.c tools.h -o test -Wall
+//gcc -pthread main.c menu.c menu.h param.c param.h type.h com.c com.h tools.c tools.h Library/formatting_text.h  Library/formatting_text.c -o test -Wall
 //by Sébastien Malissard
 
 

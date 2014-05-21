@@ -95,17 +95,28 @@ int selectRobot(void){
 
 void displayRobot(void){
     int i;
+    char str[32] = "";
 
-    printf("Numéros |    ip    | baterie | position (x, y) | sonar\n");
+    printf("Numéros |       ip       | baterie  |  position (x, y)  |  sonar\n");
+    printf("------------------------------------------------------------------\n");
     for(i = 0 ; i < NB_ROBOT ; i++){
         if( robot[i].loc == ACTIVE){
-            printf("   %d   |", robot[i].num);            
-            printf("%s|", robot[i].ip);       
-            printf("  %f  |", robot[i].bat);       
-            printf("%f, ", robot[i].pos.x);
-            printf("%f|", robot[i].pos.y);       
-            printf("%f  ", robot[i].son);
-            printf("\n");       
+            sprintf(str, "%d", robot[i].num);
+            printLeft(str, 8);
+            printf("|");
+            printLeft(robot[i].ip, 16);
+            printf("|");
+            sprintf(str, "%f", robot[i].bat);
+            printLeft(str, 10);
+            printf("|");
+            sprintf(str, "%f", robot[i].pos.x);
+            printLeft(str, 9);
+            sprintf(str, "%f", robot[i].pos.y);
+            printLeft(str, 10);
+            printf("|");
+            sprintf(str, "%f", robot[i].son);
+            printLeft(str, 10);
+            printf("\n");   
             }
         }
     }
