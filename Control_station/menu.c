@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "menu.h"
 
@@ -15,14 +19,26 @@
 
 
 void init(void){
-    int i, j;
+    int i;
+    infoRobot rob;
 
     for(i = 0 ; i < NB_ROBOT ; i++){
-        robot[i].loc = FREE;
-        for(j = 1 ; j < 20 ; j++){
-            robot[i].ip[j] = '\0';
-            }
+        rob.loc = FREE;
+        rob.num = 0;
+        memset(&rob.ip[0], '\0', sizeof(rob.ip));
+        rob.sock = 0;
+        rob.date = 0;
+        rob.bat = 33.;
+        rob.pos.x = 0.;
+        rob.pos.y = 0.;
+        rob.son = 0.;
+        rob.state = STOP;
+        rwRobot(WRITE, i, &rob);
         }
+
+    #ifdef DEBUG
+    displayRobot();
+    #endif
 
     printf(EF_BOLT BG_RED"\n---------------- Bienvenue ! -----------------" DEFAULT "\n");
     printf(EF_BOLT "par Sébastien MALISSARD & Yoann SOLANA\n" DEFAULT);
@@ -33,53 +49,53 @@ void init(void){
 
 int addRobot(void){
     int ret = 0;
-    char *ip;
-    infoRobot rob;
+    infoRobot rob = {0};
 
     printf("Saisir le numéro : ");
-    ret = enterNum();
-    if(ret > 9){
-        printf("Le nombre doit etre compris entre 0 et 9\n");
+    if( (ret = enterNum()) == -1){
         return -1;
         }
 
-    rwRobot(READ, ret, &rob);
+    if(ret > 9 || ret < 1){
+        printf("Le nombre doit etre compris entre 1 et 9\n");
+        return -1;
+        }
 
     printf("Saisir l'adresse ip : ");
-    ip = &rob.ip[0];
-    if(enterIP(ip) == -1){
+    if(enterIP(&rob.ip[0]) == -1){
         return -1;
         }
+
     rob.loc = ACTIVE;
     rob.num = ret;
 
     printf("Le robot n°%d est activé\n", ret);
 
     if( (rob.sock = initCom(&rob.ip[0])) > 0){
-        printf("La connexion avec le robot n°%d est éablie\n", ret);
+        printf("La connexion avec le robot n°%d est établie\n", ret);
         }
 
-    rwRobot(WRITE, ret, &rob);
+    #ifdef DEBUG
+    printf("socket = %d\n", rob.sock);
+    #endif
 
-    return 1;
+    if(rwRobot(WRITE, ret, &rob) == -1){
+        printf("Error to write data\n");
+        }
+    return rob.num;
     }
 
 void rmRobot(int id){
-
 
     };
 
 int selectRobot(void){
     int ret = 0;
-    char c;
     
     printf("Saisir le numéro : "); //TODO more 10 robots
-    enterString(1, &c);
-    if( c >= '0' && c <= '9'){
-        ret = c - '0';
-        }
-    else{
-        printf("Erreur de syntax\n");
+    ret = enterNum();
+    if(ret > 9 || ret < 1){
+        printf("Le nombre doit etre compris entre 1 et 9\n");
         return -1;
         }
 
@@ -94,38 +110,70 @@ int selectRobot(void){
     }
 
 void displayRobot(void){
-    int i;
+    int i, ret;
     char str[32] = "";
+    infoRobot rob = {0};
 
     printf("Numéros |       ip       | baterie  |  position (x, y)  |  sonar\n");
     printf("------------------------------------------------------------------\n");
-    for(i = 0 ; i < NB_ROBOT ; i++){
-        if( robot[i].loc == ACTIVE){
-            sprintf(str, "%d", robot[i].num);
+    for(i = 1 ; i < NB_ROBOT ; i++){
+        ret = rwRobot(READ, i, &rob);
+        if( ret>0 && rob.loc == ACTIVE){
+            sprintf(str, "%d", rob.num);
             printLeft(str, 8);
             printf("|");
-            printLeft(robot[i].ip, 16);
+            printf(" %-15s", rob.ip);
             printf("|");
-            sprintf(str, "%f", robot[i].bat);
+            sprintf(str, "%f", rob.bat);
             printLeft(str, 10);
             printf("|");
-            sprintf(str, "%f", robot[i].pos.x);
+            sprintf(str, "%f", rob.pos.x);
             printLeft(str, 9);
-            sprintf(str, "%f", robot[i].pos.y);
+            sprintf(str, "%f", rob.pos.y);
             printLeft(str, 10);
             printf("|");
-            sprintf(str, "%f", robot[i].son);
+            sprintf(str, "%f", rob.son);
             printLeft(str, 10);
             printf("\n");   
             }
         }
     }
 
+void msgConsol(void){
+	char namePipe[] = "essai.fifo";
+    int id;
+
+    remove(namePipe);
+
+    if(mkfifo(namePipe, 0644) != 0) {
+        perror("Error to create the named pipe ");
+        exit(EXIT_FAILURE);
+        }
+
+    id = fork();
+
+    if(id == 0){ //child processus
+        execlp("gnome-terminal", "./gnome-terminal", "-e", "/home/seb/RobotOfficiel/Projet_2A/Control_station/console essai.fifo", NULL); //FIXME
+        }
+
+    else{ //father processus
+        if((pipeConsole = open(namePipe, O_WRONLY)) == -1){
+	        perror("Error to open the named pipe\n");
+	        exit(EXIT_FAILURE);
+            }
+        printConsole("Bienvenue sur la console de supervision des messages\n\n");
+        
+        printf("Lancement de la console\n");
+        }
+    }
+
 void sendPoint(int num){
     int x, y;
-    sMsg msg;
+    sMsg msg = {0};
 
+    printf("x = ");
     x = enterNum();
+    printf("y = ");
     y = enterNum();
 
     msg.type = CMD;

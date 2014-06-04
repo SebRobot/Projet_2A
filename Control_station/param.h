@@ -5,6 +5,8 @@
 
 #include "type.h"
 
+#define DEBUG
+
 #define NB_ROBOT 10
 #define PORT     5000
 #define IP       "127.0.0.1"
@@ -25,6 +27,5 @@
 extern infoRobot robot[];
 extern int pipeConsole;
 
-int rwRobot(eRW rw, int num, infoRobot *p);
 
 #endif

@@ -10,5 +10,6 @@ void menu(int num);
 void displayRobot(void);
 void sendPoint(int num);
 void rmRobot(int id);
+void msgConsol(void);
 
 #endif

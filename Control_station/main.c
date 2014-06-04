@@ -1,5 +1,7 @@
-//gcc -pthread main.c menu.c menu.h param.c param.h type.h com.c com.h tools.c tools.h Library/formatting_text.h  Library/formatting_text.c -o test -Wall
+/*
+gcc -pthread main.c menu.c menu.h param.c param.h type.h com.c com.h tools.c tools.h Library/formatting_text.h  Library/formatting_text.c -o test -Wall
 //by Sébastien Malissard
+*/
 
 
 #include <stdio.h>
@@ -7,6 +9,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <netinet/in.h>
@@ -25,24 +28,23 @@
 #include "com.h"
 #include "../typeMessage.h"
 
-int sock = 0;
+
 pthread_mutex_t mutexSocket = PTHREAD_MUTEX_INITIALIZER;
 
 void *mainIhm(void* arg){
-
     int shut_down = 0;
     int temp, select = 0, ret;
-    char c;
+    char c = '\0';
 
     init();
     wait();
 
     while(!shut_down){
-
         if(c != '\n'){
             menu(select);
             }
 
+        c = '\0';
         ret = enterString(1, &c);
         
         if(ret == -1){
@@ -62,7 +64,9 @@ void *mainIhm(void* arg){
                 wait();
                 break;
             case 'a' :
-                addRobot();
+                if( (temp = addRobot()) != -1){
+                    select = temp;
+                    }
                 wait();
                 break;
             case 'l' :
@@ -70,7 +74,7 @@ void *mainIhm(void* arg){
                 wait();
                 break;
             case 'c' :
-                printf("Fonctionalité pas encore disponible\n");
+                msgConsol();
                 wait();
                 break;
             case 'q' :
@@ -81,6 +85,7 @@ void *mainIhm(void* arg){
             //if a robot is select
             case 'i' :
                 printf("Fonctionalité pas encore disponible. Utiliser -l pour voir la liste des robots\n");
+                wait();
                 break;
             case 'e' :
                 sendPoint(select);
@@ -105,7 +110,9 @@ void *mainIhm(void* arg){
             }
 
         }
-
+    #ifdef DEBUG 
+    printf("end thread menu\n");
+    #endif
     pthread_exit(NULL);
     }
 
@@ -125,54 +132,36 @@ void *mainComSend(void* arg){
 
 int main(void){
     pthread_t th1, th3;
-	char namePipe[] = "essai.fifo";
-    int id;
+    pthread_t thRecv;
 
-    id = fork();
+    FD_ZERO(&fdRecv);       
 
-    if(id == 0){ //child processus
-       execlp("gnome-terminal", "./gnome-terminal", "-e", "/home/seb/RobotOfficiel/Projet_2A/Control_station/console essai.fifo", NULL); //FIXME
+    if(pthread_create(&thRecv, NULL, moniRecv, NULL) == -1){
+    	perror("pthread_create 2\n");
+        return -1;
         }
 
-    else{ //father processus
+    if(pthread_create(&th1, NULL, mainIhm, NULL) == -1){
+    	perror("pthread_create 1\n");
+        return -1;
+        }
+    if(pthread_create(&th3, NULL, mainComSend, NULL) == -1){
+    	perror("pthread_create 3\n");
+        return -1;
+        }
 
-        remove(namePipe);
+    if (pthread_join(th1, NULL)) {
+        perror("pthread_join\n");
+        return -1;
+        }
 
-	    if(mkfifo(namePipe, 0644) != 0) {
-		    perror("Error to create the named pipe ");
-		    exit(EXIT_FAILURE);
-	        }
+    printConsole("exit\n");
 
-	    if((pipeConsole = open(namePipe, O_WRONLY)) == -1){
-		    perror("Error to open the named pipe ");
-		    exit(EXIT_FAILURE);
-	        }
+    if (pthread_join(th3, NULL)) {
+        perror("pthread_join\n");
+        return -1;
+        }
 
-        printConsole("Bienvenue sur la console de supervision des messages\n\n");
-
-
-        if(pthread_create(&th1, NULL, mainIhm, NULL) == -1){
-        	perror("pthread_create 1\n");
-            return -1;
-            }
-        if(pthread_create(&th3, NULL, mainComSend, NULL) == -1){
-        	perror("pthread_create 3\n");
-            return -1;
-            }
-
-        if (pthread_join(th1, NULL)) {
-	        perror("pthread_join\n");
-	        return -1;
-            }
-
-        printConsole("exit\n");
-
-        if (pthread_join(th3, NULL)) {
-	        perror("pthread_join\n");
-	        return -1;
-            }
-
-    }
 
     return 1;
     }

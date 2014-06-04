@@ -6,7 +6,7 @@
 #include "type.h"
 
 void printConsole(char *msg);
-int rwRobot(eRW rw, int num, infoRobot *p);
+int rwRobot(eRW rw, int num, infoRobot *rob);
 void wait(void);
 int enterString(int nb, char *ret);
 int enterNum(void);
