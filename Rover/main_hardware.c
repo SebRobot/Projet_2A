@@ -1,24 +1,25 @@
-//gcc -Wall main_hardware.c Library/i2c.c Library/gpio.c Library/i2c.h Library/prop.c Library/prop.h Library/sonar.c Library/sonar.h Library/gpio.h Library/imu.h Library/imu.c -lm -lpthread -o test
+//gcc -Wall main_hardware.c Library/i2c.c Library/gpio.c Library/i2c.h Library/prop.c Library/prop.h Library/sonar.c Library/sonar.h Library/gpio.h Library/imu.h Library/imu.c Library/tools.c Library/tools.h Library_com_rover/message.h Library_com_rover/message.c -lm -lpthread -o test
 
 
-
-
-#include "Library/prop.h"
-#include "Library/sonar.h"
-#include "Library/i2c.h"
-#include "Library/gpio.h"
-#include "Library/imu.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
 
+#include "Library/prop.h"
+#include "Library/sonar.h"
+#include "Library/i2c.h"
+#include "Library/gpio.h"
+#include "Library/imu.h"
+#include "Library_com_rover/message.h"
+
+
 int stop=0;
 float volt = -1;
 
 
-
+/*
 void updateLedBat(void){
 	static int time1 = 0, state_led_red = 1;
 	static int time0 = -1;
@@ -110,8 +111,24 @@ void *threadBattery(void* param){
     	updateLedBat();
 	}
 }
+*/
 
 
+void *threadCom(void *param){
+	sInfos sinf;
+	float x, y, theta;
+	
+	pos3(&x, &y , &theta);
+	printf("x = %.2f; y = %.2f; theta = %.2f\n"
+	       "bat = %.2f\n"
+	       "son = %d\n", x, y, theta, getBatVolt(), sonar_get_distance_cm());
+	sinf.bat = getBatVolt();
+	sinf.son = sonar_get_distance_cm();
+	sinf.pos.x = x;
+	sinf.pos.y = y;
+	sinf.dir = theta;
+	com(sinf);
+}
 
 int main(){
 //    unsigned int us_start, t0, t1, t2, t3;
@@ -122,10 +139,13 @@ int main(){
 //    point pt;
 //    int i=0;
 //    float check;
-    pthread_t pthread_prop, pthread_gpio, pthread_battery;
+    pthread_t /*pthread_prop, 
+              pthread_gpio, 
+              pthread_battery, 
+              */pthread_com;
 
 
-    //gpio init
+/*    //gpio init
 		initGPIO(GPIO_30);
 		initGPIO(GPIO_31);
 		initGPIO(GPIO_5);
@@ -134,7 +154,7 @@ int main(){
 		initGPIO(GPIO_50);
 		initGPIO(GPIO_51);
 		initGPIO(GPIO_60);
-
+*/
 
     
 /*    //Create a thread for prop
@@ -145,7 +165,7 @@ int main(){
          getchar();
          exit(-1);
         }
-*/
+
     //Create a thread control gpio
     if(pthread_create(&pthread_gpio, NULL, threadGpio, NULL)!=0){
          printf("ERROR; return code from pthread_create()\n");
@@ -159,7 +179,13 @@ int main(){
          getchar();
          exit(-1);
         }
-
+*/
+    //Create a thread com
+    if(pthread_create(&pthread_com, NULL, threadCom, NULL)!=0){
+         printf("ERROR; return code from pthread_create()\n");
+         getchar();
+         exit(-1);
+        }
 
 /*	double tab_acc[3] = {0.0, 0.0, 0.0},
 		   tab_gyro[3] = {0.0, 0.0, 0.0},

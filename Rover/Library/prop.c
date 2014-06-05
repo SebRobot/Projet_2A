@@ -66,6 +66,7 @@
     float getBatVolt(void){
     	// Open bus I2C
 			if(idFicI2C < 0) idFicI2C = openI2C((char*)ADDR_MD25);
+			if(idFicI2C < 0) return -1.;
 		// Read tenson	
         char bufW, bufR;
         bufW = BATTERY_VOLT;

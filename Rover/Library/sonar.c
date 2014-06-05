@@ -64,7 +64,10 @@ int sonar_get_distance_cm(void){
 
 	// Open I2C and acces to sonar
 		idFic = openI2C((char*)ADDR_I2C_SONAR);
-		if(idFic < 0) perror("Error in function ""openI2C()"":");
+		if(idFic < 0){
+		   perror("Error in function ""openI2C()"":");
+		   return -1;
+	    }
 
 	// Init sonar
 	    bufW[0] = SONAR_CMMND;						
