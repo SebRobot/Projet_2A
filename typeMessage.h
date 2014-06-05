@@ -5,19 +5,32 @@
 
 #include <stdint.h>
 
-typedef enum {
-    SEND,
-    RECV   
-    } eSendRecv;
+typedef struct{
+    float x;
+    float y;
+    } sPt;
 
-typedef enum {
-    CMD,
-    INFO
-    } eTypeMsg;
+typedef struct{
+    sPt pt;
+    float ang;
+    }pos;
+
+typedef enum {SEND,RECV} eSendRecv;
+typedef enum {CMD,INFO} eTypeMsg;
+typedef enum {TRAJ, STATE, POS} eTypeCmd;
+typedef enum {STP, MVT} eSta;
+
+
+typedef union{
+	sPt traj;
+	eSta state;
+    pos pos;
+    }uOrder;
 
 typedef struct {
-    int date;
-    sPt pt;     //position
+    uint16_t num;
+    eTypeCmd type;
+    uOrder order;
     } sCmd; 
 
 typedef struct {
@@ -25,6 +38,7 @@ typedef struct {
     int32_t bat;    //10* voltage battery
     float son;      //sonar
     sPt pos;        //position
+    float ang;
     } sInfos; 
 
 typedef union {
