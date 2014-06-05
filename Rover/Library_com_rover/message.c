@@ -25,6 +25,7 @@ pthread_mutex_t lock;
 sPt ptTraj;
 eSta order;
 
+
 // Lock order and ptTraj
 pthread_mutex_t mtx_order = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mtx_ptTraj = PTHREAD_MUTEX_INITIALIZER;
@@ -85,7 +86,7 @@ void accept_com(){
     // Accept connection from an incomming client
     while((client_sock = accept(sock, (struct sockaddr*)&client, (socklen_t*)&c)) > 0){
 	   printf("Connection accepted: client_sock = %d\n", client_sock);
-       
+	   
        // Creation of thread to deal request of client
        new_sock = malloc(1);
        *new_sock = client_sock;
@@ -104,14 +105,14 @@ void accept_com(){
         printf("client.sin_addr.s_addr = %s\n", z);
         
         // Creation of thread to send info Rover to control station
-        if(client.sin_addr.s_addr == (in_addr_t)inet_addr((char*) ADDR_CTRL_PC)){
+        //if(client.sin_addr.s_addr == (in_addr_t)inet_addr((char*) ADDR_CTRL_PC)){
         	// Set arg for thread
          	argThreadSttRover.clt_sock = client_sock; 
         	if(pthread_create(&sendInfoThrd, NULL, threadSttRover, (void*) &argThreadSttRover) < 0){
 		        perror("could not create thread");
 		        exit(1);
 		    }
-        } 
+        //} 
     }
     if(client_sock < 0){
        perror("accept() failed");
@@ -147,7 +148,7 @@ void *connection_handler(void *socket_desc)
 						      order = msgFromClt.body.cmd.order.state;
 						      pthread_mutex_unlock(&mtx_order);
 						  }
-						  else printf("msgFromClt.bodyMsg.cmd.type_cmd = %d unknown\n");
+						  else printf("msgFromClt.body.cmd.type = %s unknown\n", dspl_eTypeCMd(msgFromClt.body.cmd.type));
 				          break;
 				default: printf("no command message\n"); break;
 			}
