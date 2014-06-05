@@ -12,9 +12,16 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>  // inet_addr
 #include <unistd.h>     // write()
+#include <pthread.h>
 
 #include "../Library/tools.h" 
 
+
+#define PORT           5000
+#define MAX_CONNECTION 2
+#define MAX_CLIENTS    1
+#define T_INFOS        5000 // Périod 500ms for send infos
+#define ADDR_CTRL_PC "192.168.1.218" // @IP of control station
 
 typedef struct{
      float x;
@@ -49,9 +56,29 @@ typedef struct {
 }sMsg;
 
 
+typedef struct sArgThrdSttCom sArgThrdSttCom;
+struct sArgThrdSttCom{
+	int clt_sock;
+	sInfos sinf;
+};
 
-extern int init_connection(struct sockaddr_in server);
-extern void com(sInfos sinfos);
-extern void displayMsgCmd(sMsg msg);
+
+extern sArgThrdSttCom  argThreadSttRover; 
+extern sPt ptTraj;
+extern eCmd order;
+
+// Lock order and ptTraj
+extern pthread_mutex_t mtx_order;
+extern pthread_mutex_t mtx_ptTraj;
+
+int init_connection(struct sockaddr_in server);
+void accept_com();
+void *connection_handler(void *socket_desc);
+void *threadSttRover(void *sArg);
+//void *threadSttRover(sArgThrdSttCom *sArg);
+void dsplMsg(sMsg msg);
+void send_state(sInfos sinfos, int clt_sock);
+void updateInfoRover(sArgThrdSttCom* arg, float x, float y, float theta, float tension, int dist);
+
 
 #endif //MESSAGE_H
