@@ -15,8 +15,9 @@
 #include "Library_com_rover/message.h"
 
 
-int stop=0;
+int stop=0; // clnt_sock = -1;
 float volt = -1;
+
 
 
 /*
@@ -60,8 +61,15 @@ void *threadProp(void *param){
 
     while(1){
     	volt = getBatVolt();
-        if(stop==1) stopRover();
-        else{
+    	pthread_mutex_lock(&mtx_order);
+        if(stop == 1 || order == STOP) stopRover();
+        else if(order == MVT){
+        	pthread_mutex_lock(&mtx_ptTraj);
+        	followTraj((point)ptTraj);
+        	pthread_mutex_unlock(&mtx_ptTraj);
+        }
+        pthread_mutex_unlock(&mtx_order);
+        else if(stop == 0){
             if(followTraj(tabTraj[i])==1){
                 if(i==(N-1))i=0;
                 else i++;
@@ -114,21 +122,18 @@ void *threadBattery(void* param){
 */
 
 
-void *threadCom(void *param){
-	sInfos sinf;
-	float x, y, theta;
-	
-	pos3(&x, &y , &theta);
-	printf("x = %.2f; y = %.2f; theta = %.2f\n"
-	       "bat = %.2f\n"
-	       "son = %d\n", x, y, theta, getBatVolt(), sonar_get_distance_cm());
-	sinf.bat = getBatVolt();
-	sinf.son = sonar_get_distance_cm();
-	sinf.pos.x = x;
-	sinf.pos.y = y;
-	sinf.dir = theta;
-	com(sinf);
+
+
+
+void *thread_Com(void *param){
+	accept_com();
+	printf("Exit thread_Com\n");
+	pthread_exit(NULL);
 }
+
+
+
+
 
 int main(){
 //    unsigned int us_start, t0, t1, t2, t3;
@@ -139,10 +144,12 @@ int main(){
 //    point pt;
 //    int i=0;
 //    float check;
-    pthread_t /*pthread_prop, 
-              pthread_gpio, 
-              pthread_battery, 
+    pthread_t /*pthread_prop,
+              pthread_gpio,
+              pthread_battery,
               */pthread_com;
+              
+
 
 
 /*    //gpio init
@@ -180,12 +187,31 @@ int main(){
          exit(-1);
         }
 */
-    //Create a thread com
-    if(pthread_create(&pthread_com, NULL, threadCom, NULL)!=0){
+    //Create a thread for  com
+    if(pthread_create(&pthread_com, NULL, thread_Com, NULL)!=0){ //&sargThreadSttRover
+         printf("ERROR; return code from pthread_create()\n");
+         getchar();
+         exit(-1);
+    }
+        
+    //Create a thread for send state Rover
+    
+/*    typedef struct sArgThrdSttCom sArgThrdSttCom;
+    struct sArgThrdSttCom{
+    	int clt_sockt;
+    	sInfos sinf;
+    };
+    sArgThrdSttCom  sarg_thrd_stt_com;
+    sarg_thrd_stt_com.clt_sockt = clnt_sock;
+    sarg_thrd_stt_com.sinf = sInfoRover;
+    
+  
+    if(pthread_create(&pthread_state_com, NULL, thread_state_Com, &sarg_thrd_stt_com)!=0){
          printf("ERROR; return code from pthread_create()\n");
          getchar();
          exit(-1);
         }
+*/
 
 /*	double tab_acc[3] = {0.0, 0.0, 0.0},
 		   tab_gyro[3] = {0.0, 0.0, 0.0},
@@ -195,21 +221,28 @@ int main(){
 
 //	mpu_init();
 
-while(1){
+	while(1){
 
-/*	mpu_read(tab_acc, tab_gyro, tab_magn);
-	printf("\n");
-	for(i=0; i<3; i++) printf("tab_acc[%d] = %.2lf\n", i, tab_acc[i]);
-	printf("\n");
-	for(i=0; i<3; i++) printf("tab_gyro[%d] = %.2lf\n", i, tab_gyro[i]);
-	printf("\n");
-	for(i=0; i<3; i++) printf("tab_magn[%d] = %.2lf\n", i,  tab_magn[i]);
-	printf("\n\n");
+	/*	mpu_read(tab_acc, tab_gyro, tab_magn);
+		printf("\n");
+		for(i=0; i<3; i++) printf("tab_acc[%d] = %.2lf\n", i, tab_acc[i]);
+		printf("\n");
+		for(i=0; i<3; i++) printf("tab_gyro[%d] = %.2lf\n", i, tab_gyro[i]);
+		printf("\n");
+		for(i=0; i<3; i++) printf("tab_magn[%d] = %.2lf\n", i,  tab_magn[i]);
+		printf("\n\n");
 
-	printf("Distance = %d\n\n", sonar_get_distance_cm());
-*/	
+		printf("Distance = %d\n\n", sonar_get_distance_cm());
+	*/	
+		// Update Info Rover
+		float x = 0, y = 0, theta = 0;
+	//	pos3(&x, &y, &theta);
+	//	updateInfoRover(&argThreadSttRover, x, y, theta, getBatVolt(), sonar_get_distance_cm());
+		updateInfoRover(&argThreadSttRover, x, y, theta, 10, 40);
 	
-}
+
+	
+	}
 
 
 
@@ -277,8 +310,8 @@ while(1){
     printf("d=%f\n",dist(0));
 */
 
-    close(idFicI2C);
+/*    close(idFicI2C);
     printf("Fermeture du bus i2c\n");
-
+*/
     return 0;
     }
