@@ -16,6 +16,7 @@ typedef struct {
     int date;
     float bat;
     sPt pos;
+    float ang;
     float son;
     eSta state;
     } infoRobot;

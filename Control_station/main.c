@@ -88,8 +88,12 @@ void *mainIhm(void* arg){
                 wait();
                 break;
             case 'e' :
-                sendPoint(select);
-                wait();
+                if( sendPoint(select) >= 0){
+                    wait();
+                    }
+                break;
+            case 'h' :
+                stopRover(select);
                 break;
             case 'n' :
                 printf("Fonctionalité pas encore disponible\n");

@@ -8,8 +8,9 @@ int addRobot(void);
 int selectRobot(void);
 void menu(int num);
 void displayRobot(void);
-void sendPoint(int num);
+int sendPoint(int num);
 void rmRobot(int id);
 void msgConsol(void);
+void stopRover(int num);
 
 #endif

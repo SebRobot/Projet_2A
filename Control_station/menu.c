@@ -66,6 +66,8 @@ int addRobot(void){
         return -1;
         }
 
+    rwRobot(WRITE, ret, &rob);
+
     rob.loc = ACTIVE;
     rob.num = ret;
 
@@ -74,6 +76,9 @@ int addRobot(void){
     if( (rob.sock = initCom(&rob.ip[0])) > 0){
         printf("La connexion avec le robot n°%d est établie\n", ret);
         }
+    else{
+        return -1;
+        }
 
     #ifdef DEBUG
     printf("socket = %d\n", rob.sock);
@@ -81,6 +86,7 @@ int addRobot(void){
 
     if(rwRobot(WRITE, ret, &rob) == -1){
         printf("Error to write data\n");
+        return -1;
         }
     return rob.num;
     }
@@ -167,18 +173,37 @@ void msgConsol(void){
         }
     }
 
-void sendPoint(int num){
+int sendPoint(int num){
     int x, y;
-    sMsg msg = {0};
+    sMsg msg = {'\0'};
 
     printf("x = ");
-    x = enterNum();
+    if( (x = enterNum()) == -1){
+        return -1;
+        }
     printf("y = ");
-    y = enterNum();
+    if( (y = enterNum()) == -1){
+        return -1;
+        }
 
     msg.type = CMD;
+    msg.body.cmd.type = TRAJ;
     msg.body.cmd.order.traj.x = x;
     msg.body.cmd.order.traj.y = y;
+
+    if(senMsg(num, &msg) == -1){
+        return -1;
+        }
+
+    return 0;
+    }
+
+void stopRover(int num){
+    sMsg msg = {'\0'};
+
+    msg.type = CMD;
+    msg.body.cmd.type = STATE;
+    msg.body.cmd.order.state = STP;
 
     senMsg(num, &msg);
     }
@@ -198,6 +223,7 @@ void menu(int num){
         printf("| Robot n°%d sélectionné :\n", num);
         printf("|"EF_BOLT"     i "DEFAULT": Informations\n");
         printf("|"EF_BOLT"     e "DEFAULT": Envoyer un point de destination\n");
+        printf("|"EF_BOLT"     h "DEFAULT": Arrêter le robot\n");
         printf("|"EF_BOLT"     n "DEFAULT": Associer un nom\n");
         printf("|"EF_BOLT"     r "DEFAULT": Supprimer\n");
         printf("|"EF_BOLT"     d "DEFAULT": Déselectionner\n");
