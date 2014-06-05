@@ -21,7 +21,7 @@
 #define MAX_CONNECTION 2
 #define MAX_CLIENTS    1
 #define T_INFOS        5000 // Périod 500ms for send infos
-#define ADDR_CTRL_PC "192.168.1.218" // @IP of control station
+#define ADDR_CTRL_PC "127.0.0.1" // @IP of control station
 
 typedef struct{
      float x;

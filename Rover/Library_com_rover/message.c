@@ -26,8 +26,9 @@ sPt ptTraj;
 eCmd order;
 
 // Lock order and ptTraj
-pthread_mutex_t mtx_order;
-pthread_mutex_t mtx_ptTraj;
+pthread_mutex_t mtx_order = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mtx_ptTraj = PTHREAD_MUTEX_INITIALIZER;
+
 
 
 int init_connection(struct sockaddr_in server){

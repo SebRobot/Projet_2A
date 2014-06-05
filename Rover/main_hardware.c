@@ -149,9 +149,7 @@ int main(){
               pthread_battery,
               */pthread_com;
               
-// Lock order and ptTraj
-mtx_order = PTHREAD_MUTEX_INITIALIZER;
-mtx_ptTraj = PTHREAD_MUTEX_INITIALIZER;
+
 
 
 /*    //gpio init
@@ -223,28 +221,28 @@ mtx_ptTraj = PTHREAD_MUTEX_INITIALIZER;
 
 //	mpu_init();
 
-while(1){
+	while(1){
 
-/*	mpu_read(tab_acc, tab_gyro, tab_magn);
-	printf("\n");
-	for(i=0; i<3; i++) printf("tab_acc[%d] = %.2lf\n", i, tab_acc[i]);
-	printf("\n");
-	for(i=0; i<3; i++) printf("tab_gyro[%d] = %.2lf\n", i, tab_gyro[i]);
-	printf("\n");
-	for(i=0; i<3; i++) printf("tab_magn[%d] = %.2lf\n", i,  tab_magn[i]);
-	printf("\n\n");
+	/*	mpu_read(tab_acc, tab_gyro, tab_magn);
+		printf("\n");
+		for(i=0; i<3; i++) printf("tab_acc[%d] = %.2lf\n", i, tab_acc[i]);
+		printf("\n");
+		for(i=0; i<3; i++) printf("tab_gyro[%d] = %.2lf\n", i, tab_gyro[i]);
+		printf("\n");
+		for(i=0; i<3; i++) printf("tab_magn[%d] = %.2lf\n", i,  tab_magn[i]);
+		printf("\n\n");
 
-	printf("Distance = %d\n\n", sonar_get_distance_cm());
-*/	
-	// Update Info Rover
-	float x = 0, y = 0, theta = 0;
-//	pos3(&x, &y, &theta);
-//	updateInfoRover(&argThreadSttRover, x, y, theta, getBatVolt(), sonar_get_distance_cm());
-	updateInfoRover(&argThreadSttRover, x, y, theta, 10, 40);
+		printf("Distance = %d\n\n", sonar_get_distance_cm());
+	*/	
+		// Update Info Rover
+		float x = 0, y = 0, theta = 0;
+	//	pos3(&x, &y, &theta);
+	//	updateInfoRover(&argThreadSttRover, x, y, theta, getBatVolt(), sonar_get_distance_cm());
+		updateInfoRover(&argThreadSttRover, x, y, theta, 10, 40);
 	
 
 	
-}
+	}
 
 
 
