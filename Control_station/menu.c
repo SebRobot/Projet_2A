@@ -32,7 +32,7 @@ void init(void){
         rob.pos.x = 0.;
         rob.pos.y = 0.;
         rob.son = 0.;
-        rob.state = STOP;
+        rob.state = STP;
         rwRobot(WRITE, i, &rob);
         }
 
@@ -177,8 +177,8 @@ void sendPoint(int num){
     y = enterNum();
 
     msg.type = CMD;
-    msg.body.cmd.pt.x = x;
-    msg.body.cmd.pt.y = y;
+    msg.body.cmd.order.traj.x = x;
+    msg.body.cmd.order.traj.y = y;
 
     senMsg(num, &msg);
     }
