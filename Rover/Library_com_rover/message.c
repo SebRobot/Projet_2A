@@ -222,7 +222,9 @@ void dsplMsg(sMsg msg){
 
 void send_state(sInfos sinfos, int clt_sock){
 	sMsg msg_out;
+	#ifdef TELNET
 	char text[20];
+	#endif
 	
 	// Send Info
 	static uint16_t num = 0;
@@ -234,20 +236,25 @@ void send_state(sInfos sinfos, int clt_sock){
 	msg_out.body.infos.pos.y = sinfos.pos.y;
 	msg_out.body.infos.ang = sinfos.ang;
 	dsplMsg(msg_out);
+
+#ifdef TELNET
 	// Send start balise
 	sprintf(text,"\nDebut Info\n");
 	if(send(clt_sock, text, strlen("\nDebut Info\n"),0) < 0){
 		perror("Error in function com() for send() text");
 	}
+#endif
 	// Send message
 	if(send(clt_sock, &msg_out, sizeof(eTypeMsg) + sizeof(sInfos),0) < 0){
 		perror("Error in function com() for send() msg");
 	}
+#ifdef TELNET
 	// Send end balise 
 	sprintf(text,"\nFin Info\n\n");
 	if(send(clt_sock, text, strlen("\nFin Info\n\n"),0) < 0){
 		perror("Error in function com() for send() text");
 	}
+#endif
 	printf("Message Info sended\n\n"); 
 }
 

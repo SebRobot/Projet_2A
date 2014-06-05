@@ -6,6 +6,7 @@
 #define PARMA_H
 
 //#define I2C_OK
+//#define TELNET
 
 
 
