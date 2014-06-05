@@ -5,7 +5,10 @@
 
 #include "type.h"
 
+#include <sys/types.h>
+
 #include "../typeMessage.h"
+
 
 int initCom(const char *ip);
 int senMsg(const int num, const sMsg *msg);

@@ -3,15 +3,10 @@
 #ifndef _TYPE_H
 #define _TYPE_H
 
+#include "../typeMessage.h"
 
 typedef enum {ACTIVE, FREE} eLoc;
-typedef enum {STOP, MOVE} eState;
 typedef enum {READ, WRITE} eRW;
-
-typedef struct{
-    float x;
-    float y;
-    } sPt;
 
 typedef struct {
     eLoc loc;
@@ -22,7 +17,7 @@ typedef struct {
     float bat;
     sPt pos;
     float son;
-    eState state;
+    eSta state;
     } infoRobot;
 
 #endif

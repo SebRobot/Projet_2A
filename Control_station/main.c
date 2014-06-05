@@ -132,9 +132,7 @@ void *mainComSend(void* arg){
 
 int main(void){
     pthread_t th1, th3;
-    pthread_t thRecv;
-
-    FD_ZERO(&fdRecv);       
+    pthread_t thRecv;     
 
     if(pthread_create(&thRecv, NULL, moniRecv, NULL) == -1){
     	perror("pthread_create 2\n");
