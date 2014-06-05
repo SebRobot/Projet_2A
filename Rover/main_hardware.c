@@ -1,4 +1,4 @@
-//gcc -Wall main_hardware.c Library/i2c.c Library/gpio.c Library/i2c.h Library/prop.c Library/prop.h Library/sonar.c Library/sonar.h Library/gpio.h Library/imu.h Library/imu.c Library/tools.c Library/tools.h Library_com_rover/message.h Library_com_rover/message.c -lm -lpthread -o test
+//gcc -Wall main_hardware.c Library/i2c.c Library/gpio.c Library/i2c.h Library/prop.c Library/prop.h Library/sonar.c Library/sonar.h Library/gpio.h Library/imu.h Library/imu.c Library/tools.c Library/tools.h Library/param.h Library_com_rover/message.h Library_com_rover/message.c ../typeMessage.h -lm -lpthread -o test
 
 
 
@@ -12,7 +12,9 @@
 #include "Library/i2c.h"
 #include "Library/gpio.h"
 #include "Library/imu.h"
+#include "Library/param.h"
 #include "Library_com_rover/message.h"
+
 
 
 int stop=0; // clnt_sock = -1;
@@ -119,8 +121,8 @@ void *threadBattery(void* param){
     	updateLedBat();
 	}
 }
-*/
 
+*/
 
 
 
@@ -146,8 +148,8 @@ int main(){
 //    float check;
     pthread_t /*pthread_prop,
               pthread_gpio,
-              pthread_battery,
-              */pthread_com;
+              pthread_battery,*/
+              pthread_com;
               
 
 
@@ -235,11 +237,19 @@ int main(){
 		printf("Distance = %d\n\n", sonar_get_distance_cm());
 	*/	
 		// Update Info Rover
-		float x = 0, y = 0, theta = 0;
-	//	pos3(&x, &y, &theta);
-	//	updateInfoRover(&argThreadSttRover, x, y, theta, getBatVolt(), sonar_get_distance_cm());
-		updateInfoRover(&argThreadSttRover, x, y, theta, 10, 40);
-	
+		int dist;
+		float x, y, theta, bat;
+		#ifdef I2C_OK
+		pos3(&x, &y, &theta);
+		bat = getBatVolt();
+		dist = sonar_get_distance_cm();
+		#else
+		x = 0, y = 0, theta = 0;
+		bat = 15;
+		dist = 1000;
+		#endif
+		
+		updateInfoRover(&argThreadSttRover, x, y, theta, bat, dist);
 
 	
 	}

@@ -23,7 +23,7 @@ sInfos sInfoRover;
 sArgThrdSttCom argThreadSttRover;
 pthread_mutex_t lock;
 sPt ptTraj;
-eCmd order;
+eSta order;
 
 // Lock order and ptTraj
 pthread_mutex_t mtx_order = PTHREAD_MUTEX_INITIALIZER;
@@ -102,6 +102,7 @@ void accept_com(){
         printf("inet_addr((char*) ADDR_CTRL_PC = %s\n", z);
         z = inet_ntoa(*(struct in_addr*)&(client.sin_addr.s_addr));
         printf("client.sin_addr.s_addr = %s\n", z);
+        
         // Creation of thread to send info Rover to control station
         if(client.sin_addr.s_addr == (in_addr_t)inet_addr((char*) ADDR_CTRL_PC)){
         	// Set arg for thread
@@ -135,15 +136,15 @@ void *connection_handler(void *socket_desc)
 			printf("msg_in.type = %d\n", msgFromClt.type);
 			switch(msgFromClt.type){
 				case CMD: dsplMsg(msgFromClt); 
-						  if(msgFromClt.bodyMsg.cmd.type_cmd == TRAJ){
+						  if(msgFromClt.body.cmd.type == TRAJ){
 						  	  pthread_mutex_lock(&mtx_ptTraj);
-						      ptTraj.x = msgFromClt.bodyMsg.cmd.ucmd.pt.x;
-						      ptTraj.y = msgFromClt.bodyMsg.cmd.ucmd.pt.y;
+						      ptTraj = msgFromClt.body.cmd.order.traj;
+						      //ptTraj.y = msgFromClt.body.cmd.order.pt.y;
 						      pthread_mutex_unlock(&mtx_ptTraj);
 						  }
-						  else if(msgFromClt.bodyMsg.cmd.type_cmd == ORDER){
+						  else if(msgFromClt.body.cmd.type == STATE){
 							  pthread_mutex_lock(&mtx_order);
-						      order = msgFromClt.bodyMsg.cmd.ucmd.cmd;
+						      order = msgFromClt.body.cmd.order.state;
 						      pthread_mutex_unlock(&mtx_order);
 						  }
 						  else printf("msgFromClt.bodyMsg.cmd.type_cmd = %d unknown\n");
@@ -195,24 +196,24 @@ void displayMsgCmd(sMsg msg){
 void dsplMsg(sMsg msg){
 	if(msg.type == CMD){
 		printf("\t msg.type = CMD\n");
-		printf("\t msg.bodyMsg.cmd.num = %d\n", msg.bodyMsg.cmd.num);
-		if(msg.bodyMsg.cmd.type_cmd == TRAJ){
-		 printf("\t msg.bodyMsg.cmd.ucmd.pt = (%.2f; %.2f)\n", msg.bodyMsg.cmd.ucmd.pt.x, msg.bodyMsg.cmd.ucmd.pt.y);
+		printf("\t msg.body.cmd.num = %d\n", msg.body.cmd.num);
+		if(msg.body.cmd.type == TRAJ){
+		 printf("\t msg.body.cmd.order.traj = (%.2f; %.2f)\n", msg.body.cmd.order.traj.x, msg.body.cmd.order.traj.y);
 		}
-		else if(msg.bodyMsg.cmd.type_cmd == ORDER){
-			if(msg.bodyMsg.cmd.ucmd.cmd == STOP) printf("\t msg.bodyMsg.cmd.ucmd.cmd = STOP\n");
-			else if(msg.bodyMsg.cmd.ucmd.cmd == MVT) printf("\t msg.bodyMsg.cmd.ucmd.cmd = MVT\n");
-			else printf(" type of order unknown\n");
+		else if(msg.body.cmd.type == STATE){
+			if(msg.body.cmd.order.state == STP) printf("\t msg.body.cmd.order.state = STOP\n");
+			else if(msg.body.cmd.order.state == MVT) printf("\t msg.body.cmd.order.state = MVT\n");
+			else printf(" type of STATE unknown\n");
 		}
 		else printf("Type of command unknown\n");
 	}
 	else if(msg.type == INFO){
 		printf("\t msg.type = INFO\n");
-		printf("\t msg.bodyMsg.infos.num = %d\n", msg.bodyMsg.infos.num);
-		printf("\t msg.bodyMsg.infos.bat = %d\n", msg.bodyMsg.infos.bat);
-		printf("\t msg.bodyMsg.infos.son = %.2f\n", msg.bodyMsg.infos.son);
-		printf("\t msg.bodyMsg.infos.pos = (%.2f; %.2f)\n", msg.bodyMsg.infos.pos.x, msg.bodyMsg.infos.pos.y);
-		printf("\t msg.bodyMsg.infos.dir = %.2f\n", msg.bodyMsg.infos.dir);
+		printf("\t msg.body.infos.num = %d\n", msg.body.infos.num);
+		printf("\t msg.body.infos.bat = %d\n", msg.body.infos.bat);
+		printf("\t msg.body.infos.son = %.2f\n", msg.body.infos.son);
+		printf("\t msg.body.infos.pos = (%.2f; %.2f)\n", msg.body.infos.pos.x, msg.body.infos.pos.y);
+		printf("\t msg.body.infos.ang = %.2f\n", msg.body.infos.ang);
 	}
 	else printf("Type of message unknown\n");
 }
@@ -225,12 +226,12 @@ void send_state(sInfos sinfos, int clt_sock){
 	// Send Info
 	static uint16_t num = 0;
 	msg_out.type = INFO;
-	msg_out.bodyMsg.infos.num = num; num++;
-	msg_out.bodyMsg.infos.bat = (int32_t)sinfos.bat;
-	msg_out.bodyMsg.infos.son = sinfos.son;
-	msg_out.bodyMsg.infos.pos.x = sinfos.pos.x;
-	msg_out.bodyMsg.infos.pos.y = sinfos.pos.y;
-	msg_out.bodyMsg.infos.dir = sinfos.dir;
+	msg_out.body.infos.num = num; num++;
+	msg_out.body.infos.bat = (int32_t)sinfos.bat;
+	msg_out.body.infos.son = sinfos.son;
+	msg_out.body.infos.pos.x = sinfos.pos.x;
+	msg_out.body.infos.pos.y = sinfos.pos.y;
+	msg_out.body.infos.ang = sinfos.ang;
 	dsplMsg(msg_out);
 	// Send start balise
 	sprintf(text,"\nDebut Info\n");
@@ -261,18 +262,20 @@ void updateInfoRover(sArgThrdSttCom* arg, float x, float y, float theta, float t
 	arg->sinf.son = dist;
 	arg->sinf.pos.x = x;
 	arg->sinf.pos.y = y;
-	arg->sinf.dir = theta;
+	arg->sinf.ang = theta;
 	
 	pthread_mutex_unlock(&lock);
 }
 
+/*
+void updtArgStt(sArgThrdSttCom* arg, uint16_t n, int32_t bat, float son, sPt pt, float dir, uint32_t sock){
+	arg->sinf.num = n;
+	arg->sinf.bat = bat;
+	arg->sinf.son = son;
+	arg->sinf.pos = pt;
+	arg->sinf.dir = dir;
+	arg->clt_sock = sock;
 
-void create_mutexInfRover(){
+}*/
 
-}
-
-	/*
-	int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr);
-	int pthread_mutex_lock(pthread_mutex_t *mutex);
-	int pthread_mutex_unlock(pthread_mutex_t *mutex);
-	*/
+	
