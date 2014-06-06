@@ -28,7 +28,7 @@ void init(void){
         memset(&rob.ip[0], '\0', sizeof(rob.ip));
         rob.sock = 0;
         rob.date = 0;
-        rob.bat = 33.;
+        rob.bat = 0.;
         rob.pos.x = 0.;
         rob.pos.y = 0.;
         rob.son = 0.;
@@ -50,6 +50,7 @@ void init(void){
 int addRobot(void){
     int ret = 0;
     infoRobot rob = {0};
+    char buf[36];
 
     printf("Saisir le numéro : ");
     if( (ret = enterNum()) == -1){
@@ -66,17 +67,22 @@ int addRobot(void){
         return -1;
         }
 
-    rwRobot(WRITE, ret, &rob);
-
     rob.loc = ACTIVE;
     rob.num = ret;
+
+    rwRobot(WRITE, ret, &rob);
 
     printf("Le robot n°%d est activé\n", ret);
 
     if( (rob.sock = initCom(&rob.ip[0])) > 0){
-        printf("La connexion avec le robot n°%d est établie\n", ret);
+        sprintf(buf, "La connexion avec le robot n°%d est établie\n", ret);
+        printf("%s\n", buf);
+        printConsole(buf);
         }
     else{
+        rob.sock = -1;
+        rwRobot(WRITE, ret, &rob);
+        printf("La connexion avec le robot n°%d n'a pas pu être établie\n", ret);
         return -1;
         }
 
@@ -130,15 +136,15 @@ void displayRobot(void){
             printf("|");
             printf(" %-15s", rob.ip);
             printf("|");
-            sprintf(str, "%f", rob.bat);
+            sprintf(str, "%.1f", rob.bat);
             printLeft(str, 10);
             printf("|");
-            sprintf(str, "%f", rob.pos.x);
+            sprintf(str, "%.1f", rob.pos.x);
             printLeft(str, 9);
-            sprintf(str, "%f", rob.pos.y);
+            sprintf(str, "%.1f", rob.pos.y);
             printLeft(str, 10);
             printf("|");
-            sprintf(str, "%f", rob.son);
+            sprintf(str, "%.1f", rob.son);
             printLeft(str, 10);
             printf("\n");   
             }
