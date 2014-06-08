@@ -27,7 +27,7 @@ void updateLedBat(void){
 	static int time1 = 0, state_led_red = 1;
 	static int time0 = -1;
 	if(time0 < 0) time0 = millis(); 
-	if((time1 - time0) > 1000){
+	if((time1 - time0) > (SEC_DSPL_TENSION * 1000) ){
 		time0 = time1;
 	    printf("Battery's tension = %.1lf V\n", volt);
 		if(volt > MAX_THRESHOLD_TENS){
@@ -51,7 +51,7 @@ void updateLedBat(void){
 	}
 	time1 = millis();
 	// Update orange led in function of button STOP
-	if(stop==0){
+	if(stop == 0){
         writeGPIO(ORANGE_LED, "low");
         writeGPIO(GREEN_LED, "high");
 	}
@@ -64,31 +64,41 @@ void updateLedBat(void){
 
 
 void *threadProp(void *param){
-    int i=0;
-    #ifdef TREAD_PROP
+    int i=0, prevStop = -1;
+    #ifdef THREAD_PROP
     typedef enum {PROP_STP, PROP_MVT_TRAJ, PROP_MVT_TRAJ_POS, PROP_DFLT} eStateProp;
     eStateProp eSttProp = PROP_STP, eSttProp_prev;
+    eSta prevOrder = STP;
+    eTypeCmd prevTyp_Cmd = STATE;
     #endif
 
     InitMode(3);
     InitEncoder();
     InitAcc(2);
+    
+    order = STP;
 
     while(1){
-    // pthread_mutex_unlock(&mtx_typ_Cmd);
     	volt = getBatVolt();
+    	
     	pthread_mutex_lock(&mtx_order);
-		#ifdef THREAD_PROP
-    	printf("order = %s\n"
-    	       "typ_Cmd = %s\n",dspl_eSta(order), dspl_eTypeCmd(typ_Cmd));
-    	#endif
-
+		pthread_mutex_unlock(&mtx_typ_Cmd);
+		
     	if(stop == 1) order = STP;
     	else order = MVT;
+
+		#ifdef THREAD_PROP
+		if( (order != prevOrder) || (typ_Cmd != prevTyp_Cmd)){
+			printf("order = %s\n"
+			       "typ_Cmd = %s\n",dspl_eSta(order), dspl_eTypeCmd(typ_Cmd));
+			prevOrder = order;
+			prevTyp_Cmd = typ_Cmd;
+    	}
+    	#endif
     	
         if(order == STP){
             stopRover();
-            #ifdef TREAD_PROP
+            #ifdef THREAD_PROP
             eSttProp = PROP_STP;
             #endif
         }
@@ -96,12 +106,13 @@ void *threadProp(void *param){
         	pthread_mutex_lock(&mtx_position);
         	followTraj((sPt)position.pt);
         	pthread_mutex_unlock(&mtx_position);
-            #ifdef TREAD_PROP
+            #ifdef THREAD_PROP
             eSttProp = PROP_MVT_TRAJ;
             #endif
         }
         else if(order == MVT && (typ_Cmd != TRAJ || typ_Cmd != POS)){
-            #ifdef TREAD_PROP
+        	printf("§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§\n");
+            #ifdef THREAD_PROP
             eSttProp = PROP_MVT_TRAJ_POS;
             #endif
             if(followTraj(tabTraj[i])==1){
@@ -110,15 +121,19 @@ void *threadProp(void *param){
             }
         }
         
-        #ifdef TREAD_PROP
-        if(eSttProp != eSttProp_prev){
-            if(eSttProp == PROP_STP) printf("Rover stop\n");
-            if(eSttProp == PROP_MVT_TRAJ) printf("Rover is moving to point\n");
-            if(eSttProp == PROP_MVT_TRAJ_POS) printf("Rover is following points\n");
-            eSttProp_prev = eSttProp;
-        }
+        #ifdef THREAD_PROP
+        if(stop != prevStop){
+		    if(eSttProp != eSttProp_prev){
+		        if(eSttProp == PROP_STP) printf("Rover stop\n");
+		        if(eSttProp == PROP_MVT_TRAJ) printf("Rover is moving to point\n");
+		        if(eSttProp == PROP_MVT_TRAJ_POS) printf("Rover is following points\n");
+		        eSttProp_prev = eSttProp;
+		    }
+		    prevStop = stop;
+		}
         #endif
         pthread_mutex_unlock(&mtx_order);
+        pthread_mutex_unlock(&mtx_typ_Cmd);
     }
 }
 
@@ -133,18 +148,18 @@ void *threadGpio(void *param){
 		time = millis();
 		switch(etat){ 
 		    case 0 : if(bpStop == 0) etat = 1;
-		             stop = 0;
+		             stop = 1;
 		             if(time - timePrev > 50) timePrev = time;
 		             break;
-		    case 1 : if(bpStop == 0) etat = 0;
-		             stop = 1; 
-		             if(time - timePrev > 50) timePrev = time;
+		    case 1 : if(bpStop == 1) etat = 2;
+		             stop = 0; 
 		             break;
             case 2 : if(bpStop==0) etat=3;
-                     stop=1;
+                     stop = 0;
+		             if(time - timePrev > 50) timePrev = time;
                      break;
             case 3 : if(bpStop==1) etat=0;
-                     stop=0; 
+                     stop = 1; 
                      break;
 		    default : printf("Error in swicth\n");
 		              getchar();
