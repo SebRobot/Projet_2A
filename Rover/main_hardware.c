@@ -64,7 +64,7 @@ void updateLedBat(void){
 
 
 void *threadProp(void *param){
-    int i=0, prevStop = -1;
+    int i=0, prevStop = 1;
     #ifdef THREAD_PROP
     typedef enum {PROP_STP, PROP_MVT_TRAJ, PROP_MVT_TRAJ_POS, PROP_DFLT} eStateProp;
     eStateProp eSttProp = PROP_STP, eSttProp_prev;
@@ -84,8 +84,8 @@ void *threadProp(void *param){
     	pthread_mutex_lock(&mtx_order);
 		pthread_mutex_unlock(&mtx_typ_Cmd);
 		
-    	if(stop == 1) order = STP;
-    	else order = MVT;
+		if(stop != prevStop && order == MVT) order = STP;
+    	else if(stop != prevStop && order == STP) order = MVT;
 
 		#ifdef THREAD_PROP
 		if( (order != prevOrder) || (typ_Cmd != prevTyp_Cmd)){
@@ -97,24 +97,45 @@ void *threadProp(void *param){
     	#endif
     	
         if(order == STP){
-            stopRover();
             #ifdef THREAD_PROP
             eSttProp = PROP_STP;
-            #endif
+		    if(stop != prevStop){
+				if(eSttProp != eSttProp_prev){
+				    if(eSttProp == PROP_STP) printf("----Rover stop\n");
+				    eSttProp_prev = eSttProp;
+				}
+				prevStop = stop;
+			}
+		    #endif
+            stopRover();
         }
         else if(order == MVT && typ_Cmd == TRAJ){
+            #ifdef THREAD_PROP
+            eSttProp = PROP_MVT_TRAJ;
+		    if(stop != prevStop){
+				if(eSttProp != eSttProp_prev){
+				    if(eSttProp == PROP_MVT_TRAJ) printf("----Rover is moving to point\n");
+				    eSttProp_prev = eSttProp;
+				}
+				prevStop = stop;
+			}
+		    #endif
         	pthread_mutex_lock(&mtx_position);
         	followTraj((sPt)position.pt);
         	pthread_mutex_unlock(&mtx_position);
-            #ifdef THREAD_PROP
-            eSttProp = PROP_MVT_TRAJ;
-            #endif
         }
         else if(order == MVT && (typ_Cmd != TRAJ || typ_Cmd != POS)){
         	printf("§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§\n");
             #ifdef THREAD_PROP
             eSttProp = PROP_MVT_TRAJ_POS;
-            #endif
+		    if(stop != prevStop){
+				if(eSttProp != eSttProp_prev){
+				    if(eSttProp == PROP_MVT_TRAJ_POS) printf("----Rover is following points\n");
+				    eSttProp_prev = eSttProp;
+				}
+				prevStop = stop;
+			}
+		    #endif
             if(followTraj(tabTraj[i])==1){
                 if(i==(N-1))i=0;
                 else i++;
@@ -124,9 +145,9 @@ void *threadProp(void *param){
         #ifdef THREAD_PROP
         if(stop != prevStop){
 		    if(eSttProp != eSttProp_prev){
-		        if(eSttProp == PROP_STP) printf("Rover stop\n");
-		        if(eSttProp == PROP_MVT_TRAJ) printf("Rover is moving to point\n");
-		        if(eSttProp == PROP_MVT_TRAJ_POS) printf("Rover is following points\n");
+		        if(eSttProp == PROP_STP) printf("----Rover stop\n");
+		        if(eSttProp == PROP_MVT_TRAJ) printf("----Rover is moving to point\n");
+		        if(eSttProp == PROP_MVT_TRAJ_POS) printf("----Rover is following points\n");
 		        eSttProp_prev = eSttProp;
 		    }
 		    prevStop = stop;
@@ -146,6 +167,7 @@ void *threadGpio(void *param){
 	while(1){
 		bpStop = readGPIO(BP_STOP);
 		time = millis();
+
 		switch(etat){ 
 		    case 0 : if(bpStop == 0) etat = 1;
 		             stop = 1;
@@ -299,9 +321,14 @@ int main(){
 		dist = 1000;
 		#endif
 		
-		updateInfoRover(&argThreadSttRover, x, y, theta, bat, dist);
-
-	
+		//printf("x = %.2f; y  %.2f; theta = %.2f; bat = %.2f; dist = %d\n", x, y , theta, bat, dist);
+		updateInfoRover(&argThreadSttRover, &x, &y, &theta, &bat, &dist);
+/*		printf("argThreadSttRover.sinf.bat = %d\n"
+		       "argThreadSttRover.sinf.son = %.2f\n"
+		       "argThreadSttRover.sinf.pos.x = %.2f\n"
+		       "argThreadSttRover.sinf.pos.y = %.2f\n"
+		       "argThreadSttRover.sinf.ang = %.2f\n\n", (int32_t)argThreadSttRover.sinf.bat, argThreadSttRover.sinf.son, argThreadSttRover.sinf.pos.x, argThreadSttRover.sinf.pos.y, argThreadSttRover.sinf.ang);    
+*/
 	}
 
 

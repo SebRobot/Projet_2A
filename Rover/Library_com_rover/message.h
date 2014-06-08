@@ -16,12 +16,12 @@
 
 #include "../Library/tools.h" 
 #include "../../typeMessage.h"
+#include "../Library/param.h"
 
 
 #define PORT           5000
 #define MAX_CONNECTION 2
 #define MAX_CLIENTS    1
-#define T_INFOS        5000 // Périod 500ms for send infos
 #define ADDR_CTRL_PC "192.168.1.174" // @IP of control station à corriger
 /*
 typedef struct{
@@ -77,6 +77,7 @@ extern eSta order;
 extern pthread_mutex_t mtx_order;
 extern pthread_mutex_t mtx_ptTraj;
 extern pthread_mutex_t mtx_position;
+extern pthread_mutex_t mtx_typ_Cmd;
 
 int init_connection(struct sockaddr_in server);
 void accept_com();

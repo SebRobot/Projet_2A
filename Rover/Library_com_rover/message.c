@@ -22,8 +22,8 @@
 sInfos sInfoRover;
 sArgThrdSttCom argThreadSttRover;
 sPosit position;
-eTypeCmd typ_Cmd;
-eSta order;
+eTypeCmd typ_Cmd = STATE;
+eSta order = STP;
 
 
 // Lock order, position, typ_Cmd and ArgStt
@@ -133,12 +133,18 @@ void *connection_handler(void *socket_desc)
 	read_size = recv(sock, &msgFromClt, sizeof(sMsg),0);
     //Receive a message from client
 	while(read_size > 0){
-		printf("read_size = %d\n", read_size);
+		#ifdef DBG_CONNECTION_HANDLER
+		printf("Message received\n");
+		//printf("read_size = %d\n", read_size);
+		#endif
 		if(read_size > 0){
 			// Type of message ?
-			printf("msg_in.type = %d\n", msgFromClt.type);
+			printf("msg_in.type = %s\n", dspl_eTypeMsg(msgFromClt.type));
 			switch(msgFromClt.type){
-				case CMD: dsplMsg(msgFromClt);
+				case CMD: 
+				          #ifdef DDSPL_RCV_MSG
+				          dsplMsg(msgFromClt);
+						  #endif
 						  // Lock acces to positon, order and typ_Cmd 
 					  	  pthread_mutex_lock(&mtx_position);
 					  	  pthread_mutex_lock(&mtx_order);
@@ -205,21 +211,23 @@ void *threadSttRover(void *sArg){
 	pthread_exit(NULL);
 }
 
-
+/*
 void displayMsgCmd(sMsg msg){
 	printf("Message receive\n"); 
 }
+*/
 
+#ifdef DSPL_MSG
 void dsplMsg(sMsg msg){
 	if(msg.type == CMD){
 		printf("\t msg.type = CMD\n");
 		printf("\t msg.body.cmd.num = %d\n", msg.body.cmd.num);
 		if(msg.body.cmd.type == TRAJ){
-		 printf("\t msg.body.cmd.order.traj = (%.2f; %.2f)\n", msg.body.cmd.order.traj.x, msg.body.cmd.order.traj.y);
+		 printf("\t msg.body.cmd.order.traj = (%.2f; %.2f)\n\n", msg.body.cmd.order.traj.x, msg.body.cmd.order.traj.y);
 		}
 		else if(msg.body.cmd.type == STATE){
 			if(msg.body.cmd.order.state == STP) printf("\t msg.body.cmd.order.state = STOP\n");
-			else if(msg.body.cmd.order.state == MVT) printf("\t msg.body.cmd.order.state = MVT\n");
+			else if(msg.body.cmd.order.state == MVT) printf("\t msg.body.cmd.order.state = MVT\n\n");
 			else printf(" type of STATE unknown\n");
 		}
 		else printf("Type of command unknown\n");
@@ -230,11 +238,11 @@ void dsplMsg(sMsg msg){
 		printf("\t msg.body.infos.bat = %d\n", msg.body.infos.bat);
 		printf("\t msg.body.infos.son = %.2f\n", msg.body.infos.son);
 		printf("\t msg.body.infos.pos = (%.2f; %.2f)\n", msg.body.infos.pos.x, msg.body.infos.pos.y);
-		printf("\t msg.body.infos.ang = %.2f\n", msg.body.infos.ang);
+		printf("\t msg.body.infos.ang = %.2f\n\n", msg.body.infos.ang);
 	}
 	else printf("Type of message unknown\n");
 }
-
+#endif
 
 void send_state(sInfos sinfos, int clt_sock){
 	sMsg msg_out;
@@ -251,8 +259,10 @@ void send_state(sInfos sinfos, int clt_sock){
 	msg_out.body.infos.pos.x = sinfos.pos.x;
 	msg_out.body.infos.pos.y = sinfos.pos.y;
 	msg_out.body.infos.ang = sinfos.ang;
+	#ifdef DSPL_SND_MSG
 	dsplMsg(msg_out);
-
+	#endif
+	
 #ifdef TELNET
 	// Send start balise
 	sprintf(text,"\nDebut Info\n");
@@ -291,15 +301,5 @@ void updateInfoRover(sArgThrdSttCom* arg, float x, float y, float theta, float t
 	pthread_mutex_unlock(&mtx_ArgStt);
 }
 
-/*
-void updtArgStt(sArgThrdSttCom* arg, uint16_t n, int32_t bat, float son, sPt pt, float dir, uint32_t sock){
-	arg->sinf.num = n;
-	arg->sinf.bat = bat;
-	arg->sinf.son = son;
-	arg->sinf.pos = pt;
-	arg->sinf.dir = dir;
-	arg->clt_sock = sock;
-
-}*/
 
 	
