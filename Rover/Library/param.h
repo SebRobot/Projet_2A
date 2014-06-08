@@ -9,6 +9,9 @@
 //#define TELNET
 #define TREAD_PROP
 
+
+#define DBG_PROP
+
 #define MAX_THRESHOLD_TENS 11.5
 #define MIN_THRESHOLD_TENS 10.5
 

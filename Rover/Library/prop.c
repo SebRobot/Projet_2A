@@ -257,15 +257,18 @@
 //***Rotation on the spot***//
     void rotOnPt(float theta){ //Warning : rot is a block function
         float theta_start; // d=0, d1, d2, r
-        
+        #ifdef DBG_PROP
         printf("theta ask =%f, ",theta);
+        #endif
         if((theta > 180) || (theta < -180)){
             printf("Warning : theta is not between : [-180 ; 180], current speed is : %f\n", theta);
             theta=fmodf(theta, 360);
             if(theta<-180) theta+=360;
             if(theta> 180) theta-=360;
             }
+        #ifdef DBG_PROP
         printf("theta after correc=%f\n",theta);
+        #endif
         //getchar();
 
         theta*=M_PI/180;
@@ -364,7 +367,9 @@
             if(beta<-45) beta=-45;
             if((millis()-time_prev)>100){
                 time_prev=millis();
+                #ifdef DBG_PROP
                 printf("x_c=%f, y_c=%f, theta_c=%f, beta=%f, x_obj=%f, y_obj=%f\n",x_c,y_c,theta_c,beta,pt.x,pt.y);
+            	#endif
             }
             move(SPEED, beta);
 

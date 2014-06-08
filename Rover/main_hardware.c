@@ -17,7 +17,7 @@
 
 
 
-int stop=0; // clnt_sock = -1;
+int stop = 1; // clnt_sock = -1;
 float volt = -1;
 
 
@@ -50,6 +50,15 @@ void updateLedBat(void){
 		}
 	}
 	time1 = millis();
+	// Update orange led in function of button STOP
+	if(stop==0){
+        writeGPIO(ORANGE_LED, "low");
+        writeGPIO(GREEN_LED, "high");
+	}
+    else{
+        writeGPIO(ORANGE_LED, "high");
+		writeGPIO(GREEN_LED, "low");
+    }
 }
 
 
@@ -58,7 +67,7 @@ void *threadProp(void *param){
     int i=0;
     #ifdef TREAD_PROP
     typedef enum {PROP_STP, PROP_MVT_TRAJ, PROP_MVT_TRAJ_POS, PROP_DFLT} eStateProp;
-    eStateProp eSttProp = PROP_DFLT, eSttProp_prev;
+    eStateProp eSttProp = PROP_STP, eSttProp_prev;
     #endif
 
     InitMode(3);
@@ -75,6 +84,7 @@ void *threadProp(void *param){
     	#endif
 
     	if(stop == 1) order = STP;
+    	else order = MVT;
     	
         if(order == STP){
             stopRover();
@@ -113,32 +123,33 @@ void *threadProp(void *param){
 }
 
 void *threadGpio(void *param){
-    int etat=0;
-    int bpstop=0;
-
-    while(1){
-        bpstop=readGPIO(BP_STOP);
-
-        switch(etat){ 
-            case 0 : if(bpstop==0) etat=1;
-                     stop=0;
+    int etat = 0;
+    int bpStop = 0;
+    int time = 0, timePrev = -1;
+    
+    
+	while(1){
+		bpStop = readGPIO(BP_STOP);
+		time = millis();
+		switch(etat){ 
+		    case 0 : if(bpStop == 0) etat = 1;
+		             stop = 0;
+		             if(time - timePrev > 50) timePrev = time;
+		             break;
+		    case 1 : if(bpStop == 0) etat = 0;
+		             stop = 1; 
+		             if(time - timePrev > 50) timePrev = time;
+		             break;
+            case 2 : if(bpStop==0) etat=3;
+                     stop=1;
                      break;
-            case 1 : if(bpstop==1) etat=0;
-                     stop=1; 
+            case 3 : if(bpStop==1) etat=0;
+                     stop=0; 
                      break;
-            default : printf("Error in swicth\n");
-                      getchar();
-        }
-
-        if(stop==0){
-        writeGPIO(ORANGE_LED, "low");
-        writeGPIO(GREEN_LED, "high");
+		    default : printf("Error in swicth\n");
+		              getchar();
 		}
-        else{
-        writeGPIO(ORANGE_LED, "high");
-		writeGPIO(GREEN_LED, "low");
-        }
-    }
+	}
 }
     
 void *threadBattery(void* param){
