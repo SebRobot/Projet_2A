@@ -22,7 +22,7 @@ float volt = -1;
 
 
 
-/*
+
 void updateLedBat(void){
 	static int time1 = 0, state_led_red = 1;
 	static int time0 = -1;
@@ -30,22 +30,22 @@ void updateLedBat(void){
 	if((time1 - time0) > 1000){
 		time0 = time1;
 	    printf("Battery's tension = %.1lf V\n", volt);
-		if(volt > 11.5){
-		    writeGPIO(GPIO_50, "high");
-		    writeGPIO(GPIO_51, "low");
+		if(volt > MAX_THRESHOLD_TENS){
+		    writeGPIO(GREEN_LED_BIC, "high");
+		    writeGPIO(RED_LED_BIC, "low");
 		}
         else{
-		    if(volt > 10.5){
-		        writeGPIO(GPIO_50, "high");
-		        writeGPIO(GPIO_51, "high");
+		    if(volt > MIN_THRESHOLD_TENS){
+		        writeGPIO(RED_LED_BIC, "high");
+		        writeGPIO(GREEN_LED_BIC, "high");
 		    }
 		    else{
 		    	switch(state_led_red){
-		    		case 0 : writeGPIO(GPIO_51, "low"); state_led_red = 1; break;
-				    case 1 : writeGPIO(GPIO_51, "high"); state_led_red = 0; break; 
+		    		case 0 : writeGPIO(RED_LED_BIC, "low"); state_led_red = 1; break;
+				    case 1 : writeGPIO(RED_LED_BIC, "high"); state_led_red = 0; break; 
 				    default : alert(); perror("Error in funcion ""updateLedBat"" for state_led_red"); break;
 				}
-				writeGPIO(GPIO_50, "low");
+				writeGPIO(GREEN_LED_BIC, "low");
 		    }
 		}
 	}
@@ -56,27 +56,59 @@ void updateLedBat(void){
 
 void *threadProp(void *param){
     int i=0;
+    #ifdef TREAD_PROP
+    typedef enum {PROP_STP, PROP_MVT_TRAJ, PROP_MVT_TRAJ_POS, PROP_DFLT} eStateProp;
+    eStateProp eSttProp = PROP_DFLT, eSttProp_prev;
+    #endif
 
     InitMode(3);
     InitEncoder();
     InitAcc(2);
 
     while(1){
+    // pthread_mutex_unlock(&mtx_typ_Cmd);
     	volt = getBatVolt();
     	pthread_mutex_lock(&mtx_order);
-        if(stop == 1 || order == STOP) stopRover();
-        else if(order == MVT){
-        	pthread_mutex_lock(&mtx_ptTraj);
-        	followTraj((point)ptTraj);
-        	pthread_mutex_unlock(&mtx_ptTraj);
+		#ifdef THREAD_PROP
+    	printf("order = %s\n"
+    	       "typ_Cmd = %s\n",dspl_eSta(order), dspl_eTypeCmd(typ_Cmd));
+    	#endif
+
+    	if(stop == 1) order = STP;
+    	
+        if(order == STP){
+            stopRover();
+            #ifdef TREAD_PROP
+            eSttProp = PROP_STP;
+            #endif
         }
-        pthread_mutex_unlock(&mtx_order);
-        else if(stop == 0){
+        else if(order == MVT && typ_Cmd == TRAJ){
+        	pthread_mutex_lock(&mtx_position);
+        	followTraj((sPt)position.pt);
+        	pthread_mutex_unlock(&mtx_position);
+            #ifdef TREAD_PROP
+            eSttProp = PROP_MVT_TRAJ;
+            #endif
+        }
+        else if(order == MVT && (typ_Cmd != TRAJ || typ_Cmd != POS)){
+            #ifdef TREAD_PROP
+            eSttProp = PROP_MVT_TRAJ_POS;
+            #endif
             if(followTraj(tabTraj[i])==1){
                 if(i==(N-1))i=0;
                 else i++;
             }
         }
+        
+        #ifdef TREAD_PROP
+        if(eSttProp != eSttProp_prev){
+            if(eSttProp == PROP_STP) printf("Rover stop\n");
+            if(eSttProp == PROP_MVT_TRAJ) printf("Rover is moving to point\n");
+            if(eSttProp == PROP_MVT_TRAJ_POS) printf("Rover is following points\n");
+            eSttProp_prev = eSttProp;
+        }
+        #endif
+        pthread_mutex_unlock(&mtx_order);
     }
 }
 
@@ -85,34 +117,28 @@ void *threadGpio(void *param){
     int bpstop=0;
 
     while(1){
-        bpstop=readGPIO(GPIO_60);
-//        volt = getBatVolt();
-//        updateLedBat();
-
+        bpstop=readGPIO(BP_STOP);
 
         switch(etat){ 
             case 0 : if(bpstop==0) etat=1;
                      stop=0;
                      break;
-            case 1 : if(bpstop==1) etat=2;
+            case 1 : if(bpstop==1) etat=0;
                      stop=1; 
-                     break;
-            case 2 : if(bpstop==0) etat=3;
-                     stop=1;
-                     break;
-            case 3 : if(bpstop==1) etat=0;
-                     stop=0; 
                      break;
             default : printf("Error in swicth\n");
                       getchar();
         }
 
-        if(stop==0)
-        writeGPIO(GPIO_48, "low");
-        else
-        writeGPIO(GPIO_48, "high");
-
+        if(stop==0){
+        writeGPIO(ORANGE_LED, "low");
+        writeGPIO(GREEN_LED, "high");
+		}
+        else{
+        writeGPIO(ORANGE_LED, "high");
+		writeGPIO(GREEN_LED, "low");
         }
+    }
 }
     
 void *threadBattery(void* param){
@@ -122,7 +148,7 @@ void *threadBattery(void* param){
 	}
 }
 
-*/
+
 
 
 
@@ -146,28 +172,26 @@ int main(){
 //    point pt;
 //    int i=0;
 //    float check;
-    pthread_t /*pthread_prop,
+    pthread_t pthread_prop,
               pthread_gpio,
-              pthread_battery,*/
+              pthread_battery,
               pthread_com;
               
 
 
 
-/*    //gpio init
-		initGPIO(GPIO_30);
-		initGPIO(GPIO_31);
-		initGPIO(GPIO_5);
-		initGPIO(GPIO_4);
-		initGPIO(GPIO_48);
-		initGPIO(GPIO_50);
-		initGPIO(GPIO_51);
-		initGPIO(GPIO_60);
-*/
+    //gpio init
+		initGPIO(GREEN_LED);
+		initGPIO(ORANGE_LED);
+		initGPIO(WRNG_RED_LED);
+		initGPIO(RED_LED_BIC);
+		initGPIO(GREEN_LED_BIC);
+		initGPIO(BP_STOP);
+
 
     
-/*    //Create a thread for prop
-    idFicI2C=openI2C();
+    //Create a thread for prop
+    idFicI2C=openI2C(FILE_I2C);
     setI2C(ADDR_MD25, idFicI2C);
     if(pthread_create(&pthread_prop, NULL, threadProp, NULL)!=0){
          printf("ERROR; return code from pthread_create()\n");
@@ -188,7 +212,7 @@ int main(){
          getchar();
          exit(-1);
         }
-*/
+
     //Create a thread for  com
     if(pthread_create(&pthread_com, NULL, thread_Com, NULL)!=0){ //&sargThreadSttRover
          printf("ERROR; return code from pthread_create()\n");
@@ -196,15 +220,15 @@ int main(){
          exit(-1);
     }
         
-    //Create a thread for send state Rover
+/*    //Create a thread for send state Rover
     
-/*    typedef struct sArgThrdSttCom sArgThrdSttCom;
+    typedef struct sArgThrdSttCom sArgThrdSttCom;
     struct sArgThrdSttCom{
     	int clt_sockt;
     	sInfos sinf;
     };
     sArgThrdSttCom  sarg_thrd_stt_com;
-    sarg_thrd_stt_com.clt_sockt = clnt_sock;
+    sarg_thrd_stt_com.clt_sock = clnt_sock;
     sarg_thrd_stt_com.sinf = sInfoRover;
     
   

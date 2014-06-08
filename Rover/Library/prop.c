@@ -19,7 +19,7 @@
     int idFicI2C = -1; 
     float x_c=0., y_c=0., theta_c=0.;
     float nd1=0., nd2=0.;
-    point tabTraj[N]={
+    sPt tabTraj[N]={
         {500.,   0.},
         {500., 500.},
         {  0., 500.},
@@ -335,7 +335,7 @@
 
 
 
-    int followTraj(point pt){ //Warning is a block function
+    int followTraj(sPt pt){ //Warning is a block function
         float alpha, beta; // d, theta
         static int time_prev=0;
         static int first=1;

@@ -9,7 +9,7 @@
 extern unsigned int microsec();
 extern unsigned int millisec();
 char* dspl_eTypeMsg(eTypeMsg eType);
-char* dspl_eTypeCMd(eTypeCmd eType);
+char* dspl_eTypeCmd(eTypeCmd eType);
 char* dspl_eSta(eSta eType);
 
 

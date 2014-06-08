@@ -21,14 +21,16 @@
 
 sInfos sInfoRover;
 sArgThrdSttCom argThreadSttRover;
-pthread_mutex_t lock;
-sPt ptTraj;
+sPosit position;
+eTypeCmd typ_Cmd;
 eSta order;
 
 
-// Lock order and ptTraj
+// Lock order, position, typ_Cmd and ArgStt
 pthread_mutex_t mtx_order = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mtx_ptTraj = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mtx_position = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mtx_typ_Cmd = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mtx_ArgStt;
 
 
 
@@ -136,28 +138,42 @@ void *connection_handler(void *socket_desc)
 			// Type of message ?
 			printf("msg_in.type = %d\n", msgFromClt.type);
 			switch(msgFromClt.type){
-				case CMD: dsplMsg(msgFromClt); 
+				case CMD: dsplMsg(msgFromClt);
+						  // Lock acces to positon, order and typ_Cmd 
+					  	  pthread_mutex_lock(&mtx_position);
+					  	  pthread_mutex_lock(&mtx_order);
+					  	  pthread_mutex_lock(&mtx_typ_Cmd);
+					  	  
 						  if(msgFromClt.body.cmd.type == TRAJ){
-						  	  pthread_mutex_lock(&mtx_ptTraj);
-						      ptTraj = msgFromClt.body.cmd.order.traj;
-						      //ptTraj.y = msgFromClt.body.cmd.order.pt.y;
-						      pthread_mutex_unlock(&mtx_ptTraj);
+						  	  typ_Cmd = TRAJ;
+						      order = MVT;
+						      position.pt = msgFromClt.body.cmd.order.traj;
 						  }
 						  else if(msgFromClt.body.cmd.type == STATE){
-							  pthread_mutex_lock(&mtx_order);
+						  	  typ_Cmd = STATE;
 						      order = msgFromClt.body.cmd.order.state;
-						      pthread_mutex_unlock(&mtx_order);
 						  }
-						  else printf("msgFromClt.body.cmd.type = %s unknown\n", dspl_eTypeCMd(msgFromClt.body.cmd.type));
+						  else if(msgFromClt.body.cmd.type == POS){
+						  	  typ_Cmd = POS;
+						      order = msgFromClt.body.cmd.order.state;
+						      position.pt = msgFromClt.body.cmd.order.pos.pt;
+						      position.ang = msgFromClt.body.cmd.order.pos.ang;
+						  }
+						  else printf("msgFromClt.body.cmd.type = %s unknown\n", dspl_eTypeCmd(msgFromClt.body.cmd.type));
+						  // Unlock
+					      pthread_mutex_unlock(&mtx_position);
+					      pthread_mutex_unlock(&mtx_order);
+					  	  pthread_mutex_unlock(&mtx_typ_Cmd);
+					  	  
 				          break;
-				default: printf("no command message\n"); break;
+				default: printf("No command message\n"); break;
 			}
 		}
 	read_size = recv(sock, &msgFromClt, sizeof(sMsg),0);
 	}
     // Client disconnected
     if(read_size == 0){
-        printf("Client disconnected");
+        printf("Client disconnected\n");
         
     }
     // Error on connection
@@ -261,7 +277,7 @@ void send_state(sInfos sinfos, int clt_sock){
 
 
 void updateInfoRover(sArgThrdSttCom* arg, float x, float y, float theta, float tension, int dist){
-	pthread_mutex_lock(&lock);
+	pthread_mutex_lock(&mtx_ArgStt);
 	
 /*	printf("x = %.2f; y = %.2f; theta = %.2f\n"
 		   "bat = %.2f\n"
@@ -272,7 +288,7 @@ void updateInfoRover(sArgThrdSttCom* arg, float x, float y, float theta, float t
 	arg->sinf.pos.y = y;
 	arg->sinf.ang = theta;
 	
-	pthread_mutex_unlock(&lock);
+	pthread_mutex_unlock(&mtx_ArgStt);
 }
 
 /*

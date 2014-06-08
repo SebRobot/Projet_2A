@@ -69,12 +69,14 @@ struct sArgThrdSttCom{
 
 
 extern sArgThrdSttCom  argThreadSttRover; 
-extern sPt ptTraj;
+extern sPosit position;
+extern eTypeCmd typ_Cmd;
 extern eSta order;
 
 // Lock order and ptTraj
 extern pthread_mutex_t mtx_order;
 extern pthread_mutex_t mtx_ptTraj;
+extern pthread_mutex_t mtx_position;
 
 int init_connection(struct sockaddr_in server);
 void accept_com();

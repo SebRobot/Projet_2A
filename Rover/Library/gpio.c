@@ -90,7 +90,7 @@ int readGPIO(char *gpio){ //Only for the moment sizeof(gpio)=2
 
 
 void alert(void){
-	writeGPIO(GPIO_48, "high");
+	writeGPIO(WRNG_RED_LED, "high");
 }
 
 /*

@@ -8,6 +8,9 @@
 #ifndef PROP_H_
 #define PROP_H_
 
+// To know struct sPt
+#include "../../typeMessage.h"
+
 //Programme
 #define N       4       //sizeof tabTraj
 #define SPEED   200
@@ -43,16 +46,17 @@
 
 
 //***Define***//
+/*
     typedef struct{
         float x;
         float y;
         }point;
-        
+  */      
 
         extern int idFicI2C;
         extern float x_c, y_c, theta_c;
         extern float nd1, nd2;
-        extern point tabTraj[N];
+        extern sPt tabTraj[N];
 
 //*** Déclaration ***//
 unsigned int micros();
@@ -70,7 +74,7 @@ void pos2(float *_x, float *_y, float *_theta);
 void pos3(float *_x, float *_y, float *_theta);
 void rotOnPt(float theta);
 float trajCorr(float x, float y, float theta, float xf, float yf);
-int followTraj(point pt);
+int followTraj(sPt pt);
 
 
 #endif /* PROP_H_ */

@@ -13,7 +13,7 @@ typedef struct{
 typedef struct{
     sPt pt;
     float ang;
-    }posit;
+    }sPosit;
 
 typedef enum {SEND,RECV} eSendRecv;
 typedef enum {CMD,INFO} eTypeMsg;
@@ -24,7 +24,7 @@ typedef enum {STP, MVT} eSta;
 typedef union{
 	sPt traj;
 	eSta state;
-    posit pos;
+    sPosit pos;
     }uOrder;
 
 typedef struct {
