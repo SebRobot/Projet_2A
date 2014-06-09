@@ -17,7 +17,7 @@
 
 
 
-int stop = 1; // clnt_sock = -1;
+//int stop = 1; // clnt_sock = -1;
 float volt = -1;
 
 
@@ -51,7 +51,8 @@ void updateLedBat(void){
 	}
 	time1 = millis();
 	// Update orange led in function of button STOP
-	if(stop == 0){
+	pthread_mutex_lock(&mtx_order);
+	if(order == 0){
         writeGPIO(ORANGE_LED, "low");
         writeGPIO(GREEN_LED, "high");
 	}
@@ -59,16 +60,17 @@ void updateLedBat(void){
         writeGPIO(ORANGE_LED, "high");
 		writeGPIO(GREEN_LED, "low");
     }
+    pthread_mutex_unlock(&mtx_order);
 }
 
 
 
 void *threadProp(void *param){
-    int i=0, prevStop = 1;
+    int i=0;// prevStop = 1;
     #ifdef THREAD_PROP
     typedef enum {PROP_STP, PROP_MVT_TRAJ, PROP_MVT_TRAJ_POS, PROP_DFLT} eStateProp;
     eStateProp eSttProp = PROP_STP, eSttProp_prev;
-    eSta prevOrder = STP;
+    eSta prevOrder;
     eTypeCmd prevTyp_Cmd = STATE;
     #endif
 
@@ -77,6 +79,7 @@ void *threadProp(void *param){
     InitAcc(2);
     
     order = STP;
+    prevOrder = order;
 
     while(1){
     	volt = getBatVolt();
@@ -84,9 +87,9 @@ void *threadProp(void *param){
     	pthread_mutex_lock(&mtx_order);
 		pthread_mutex_unlock(&mtx_typ_Cmd);
 		
-		if(stop != prevStop && order == MVT) order = STP;
-    	else if(stop != prevStop && order == STP) order = MVT;
-
+		//printf("order = %s\n"
+		//	   "typ_Cmd = %s\n",dspl_eSta(order), dspl_eTypeCmd(typ_Cmd));
+		
 		#ifdef THREAD_PROP
 		if( (order != prevOrder) || (typ_Cmd != prevTyp_Cmd)){
 			printf("order = %s\n"
@@ -99,12 +102,12 @@ void *threadProp(void *param){
         if(order == STP){
             #ifdef THREAD_PROP
             eSttProp = PROP_STP;
-		    if(stop != prevStop){
+		    if(order != prevOrder){
 				if(eSttProp != eSttProp_prev){
 				    if(eSttProp == PROP_STP) printf("----Rover stop\n");
 				    eSttProp_prev = eSttProp;
 				}
-				prevStop = stop;
+				prevOrder = order;
 			}
 		    #endif
             stopRover();
@@ -112,28 +115,28 @@ void *threadProp(void *param){
         else if(order == MVT && typ_Cmd == TRAJ){
             #ifdef THREAD_PROP
             eSttProp = PROP_MVT_TRAJ;
-		    if(stop != prevStop){
+		    if(order != prevOrder){
 				if(eSttProp != eSttProp_prev){
 				    if(eSttProp == PROP_MVT_TRAJ) printf("----Rover is moving to point\n");
 				    eSttProp_prev = eSttProp;
 				}
-				prevStop = stop;
+				prevOrder = order;
 			}
 		    #endif
         	pthread_mutex_lock(&mtx_position);
-        	followTraj((sPt)position.pt);
+        	if(followTraj((sPt)position.pt) == 1) order = STP;
         	pthread_mutex_unlock(&mtx_position);
         }
         else if(order == MVT && (typ_Cmd != TRAJ || typ_Cmd != POS)){
-        	printf("§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§\n");
+        	printf("Rover follow points of table\n");
             #ifdef THREAD_PROP
             eSttProp = PROP_MVT_TRAJ_POS;
-		    if(stop != prevStop){
+		    if(order != prevOrder){
 				if(eSttProp != eSttProp_prev){
 				    if(eSttProp == PROP_MVT_TRAJ_POS) printf("----Rover is following points\n");
 				    eSttProp_prev = eSttProp;
 				}
-				prevStop = stop;
+				prevOrder = order;
 			}
 		    #endif
             if(followTraj(tabTraj[i])==1){
@@ -143,14 +146,14 @@ void *threadProp(void *param){
         }
         
         #ifdef THREAD_PROP
-        if(stop != prevStop){
+        if(order != prevOrder){
 		    if(eSttProp != eSttProp_prev){
 		        if(eSttProp == PROP_STP) printf("----Rover stop\n");
 		        if(eSttProp == PROP_MVT_TRAJ) printf("----Rover is moving to point\n");
 		        if(eSttProp == PROP_MVT_TRAJ_POS) printf("----Rover is following points\n");
 		        eSttProp_prev = eSttProp;
 		    }
-		    prevStop = stop;
+		    prevOrder = order;
 		}
         #endif
         pthread_mutex_unlock(&mtx_order);
@@ -161,31 +164,33 @@ void *threadProp(void *param){
 void *threadGpio(void *param){
     int etat = 0;
     int bpStop = 0;
-    int time = 0, timePrev = -1;
+    //int time = 0, timePrev = -1;
     
     
 	while(1){
 		bpStop = readGPIO(BP_STOP);
 		time = millis();
-
+		
+		pthread_mutex_lock(&mtx_order);
 		switch(etat){ 
-		    case 0 : if(bpStop == 0) etat = 1;
-		             stop = 1;
-		             if(time - timePrev > 50) timePrev = time;
+		    case 0 : if(bpStop == 0 || order == MVT) etat = 1;
+		             order = STP;
+		             //if(time - timePrev > 50) timePrev = time;
 		             break;
 		    case 1 : if(bpStop == 1) etat = 2;
-		             stop = 0; 
+		             order = MVT; 
 		             break;
-            case 2 : if(bpStop==0) etat=3;
-                     stop = 0;
-		             if(time - timePrev > 50) timePrev = time;
+            case 2 : if(bpStop==0 || order == STP) etat=3;
+                     order = MVT;
+		             //if(time - timePrev > 50) timePrev = time;
                      break;
             case 3 : if(bpStop==1) etat=0;
-                     stop = 1; 
+                     order = STP; 
                      break;
 		    default : printf("Error in swicth\n");
 		              getchar();
 		}
+		pthread_mutex_unlock(&mtx_order);
 	}
 }
     

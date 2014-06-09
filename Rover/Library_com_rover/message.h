@@ -85,7 +85,7 @@ void *connection_handler(void *socket_desc);
 void *threadSttRover(void *sArg);
 void dsplMsg(sMsg msg);
 void send_state(sInfos sinfos, int clt_sock);
-void updateInfoRover(sArgThrdSttCom* arg, float x, float y, float theta, float tension, int dist);
+void updateInfoRover(sArgThrdSttCom* arg, float* x, float* y, float* theta, float* tension, int* dist);
 
 
 

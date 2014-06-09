@@ -286,17 +286,17 @@ void send_state(sInfos sinfos, int clt_sock){
 
 
 
-void updateInfoRover(sArgThrdSttCom* arg, float x, float y, float theta, float tension, int dist){
+void updateInfoRover(sArgThrdSttCom* arg, float* x, float* y, float* theta, float* tension, int* dist){
 	pthread_mutex_lock(&mtx_ArgStt);
 	
 /*	printf("x = %.2f; y = %.2f; theta = %.2f\n"
 		   "bat = %.2f\n"
 		   "son = %d\n", x, y, theta, tension, dist);
-*/	arg->sinf.bat = tension;
-	arg->sinf.son = dist;
-	arg->sinf.pos.x = x;
-	arg->sinf.pos.y = y;
-	arg->sinf.ang = theta;
+*/	arg->sinf.bat = *tension;
+	arg->sinf.son = *dist;
+	arg->sinf.pos.x = *x;
+	arg->sinf.pos.y = *y;
+	arg->sinf.ang = *theta;
 	
 	pthread_mutex_unlock(&mtx_ArgStt);
 }

@@ -5,7 +5,7 @@
 
 #include "type.h"
 
-#define DEBUG
+//#define DEBUG
 
 #define NB_ROBOT 10
 #define PORT     5000
