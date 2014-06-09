@@ -22,7 +22,7 @@
 
 #define MAX_THRESHOLD_TENS  11.5
 #define MIN_THRESHOLD_TENS  10.5
-#define SEC_DSPL_TENSION      60 // Display tension of battery every minute
+#define SEC_DSPL_TENSION      1 // Display tension of battery every minute
 #define T_INFOS            5000 // Périod 500ms for send infos
 
 

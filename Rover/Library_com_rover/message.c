@@ -196,26 +196,31 @@ void *connection_handler(void *socket_desc)
 void *threadSttRover(void *sArg){
 	int time0 = 0, time1;
 	sInfos inf2send;
-	sArgThrdSttCom arg = *(sArgThrdSttCom*)sArg;
+	sArgThrdSttCom* arg = (sArgThrdSttCom*)sArg;
 	
-	printf("\nthreadSttRover\n");
-	printf("arg.clt_sock = %d\n", arg.clt_sock);
-	while(arg.clt_sock > 0){
+	memcpy(arg, sArg, sizeof(sArgThrdSttCom));
+	
+	while(arg->clt_sock > 0){
 		time1 = millisec();
 		if((time1 - time0) > T_INFOS){
 			time0 = time1;
-			memcpy(&inf2send, &arg.sinf, sizeof(sInfos));
-			send_state(inf2send, arg.clt_sock);
+			/*printf("arg->sinf.num = %d\n"
+			       "arg->sinf.bat = %d\n"
+			       "arg->sinf.son = %.2f\n"
+			       "arg->sinf.pos = (%.2f; %.2f)\n"
+			       "arg->sinf.ang = %.2f\n", arg->sinf.num, arg->sinf.bat, arg->sinf.son, arg->sinf.pos.x, arg->sinf.pos.y, arg->sinf.ang);
+			*/      
+			inf2send.num = arg->sinf.num;
+			inf2send.bat = arg->sinf.bat;
+			inf2send.son = arg->sinf.son;
+			inf2send.pos = arg->sinf.pos;
+			inf2send.ang = arg->sinf.ang;
+			send_state(inf2send, arg->clt_sock);
 		}
 	}
 	pthread_exit(NULL);
 }
 
-/*
-void displayMsgCmd(sMsg msg){
-	printf("Message receive\n"); 
-}
-*/
 
 #ifdef DSPL_MSG
 void dsplMsg(sMsg msg){
@@ -234,11 +239,11 @@ void dsplMsg(sMsg msg){
 	}
 	else if(msg.type == INFO){
 		printf("\t msg.type = INFO\n");
-		printf("\t msg.body.infos.num = %d\n", msg.body.infos.num);
-		printf("\t msg.body.infos.bat = %d\n", msg.body.infos.bat);
-		printf("\t msg.body.infos.son = %.2f\n", msg.body.infos.son);
-		printf("\t msg.body.infos.pos = (%.2f; %.2f)\n", msg.body.infos.pos.x, msg.body.infos.pos.y);
-		printf("\t msg.body.infos.ang = %.2f\n\n", msg.body.infos.ang);
+		printf("\t    .body.infos.num = %d\n", msg.body.infos.num);
+		printf("\t               .bat = %d\n", msg.body.infos.bat);
+		printf("\t               .son = %.2f\n", msg.body.infos.son);
+		printf("\t               .pos = (%.2f; %.2f)\n", msg.body.infos.pos.x, msg.body.infos.pos.y);
+		printf("\t               .ang = %.2f\n\n", msg.body.infos.ang);
 	}
 	else printf("Type of message unknown\n");
 }

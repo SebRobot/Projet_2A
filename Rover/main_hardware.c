@@ -67,6 +67,7 @@ void updateLedBat(void){
 
 void *threadProp(void *param){
     int i=0;// prevStop = 1;
+    static int u = 0;
     #ifdef THREAD_PROP
     typedef enum {PROP_STP, PROP_MVT_TRAJ, PROP_MVT_TRAJ_POS, PROP_DFLT} eStateProp;
     eStateProp eSttProp = PROP_STP, eSttProp_prev;
@@ -101,43 +102,42 @@ void *threadProp(void *param){
     	
         if(order == STP){
             #ifdef THREAD_PROP
-            eSttProp = PROP_STP;
-		    if(order != prevOrder){
-				if(eSttProp != eSttProp_prev){
-				    if(eSttProp == PROP_STP) printf("----Rover stop\n");
-				    eSttProp_prev = eSttProp;
-				}
-				prevOrder = order;
+		    if(u != 1){
+				printf("----Rover stop\n");
 			}
+			u = 1;
 		    #endif
             stopRover();
         }
         else if(order == MVT && typ_Cmd == TRAJ){
             #ifdef THREAD_PROP
-            eSttProp = PROP_MVT_TRAJ;
-		    if(order != prevOrder){
-				if(eSttProp != eSttProp_prev){
-				    if(eSttProp == PROP_MVT_TRAJ) printf("----Rover is moving to point\n");
-				    eSttProp_prev = eSttProp;
-				}
-				prevOrder = order;
+		    if(u != 2){
+				printf("----Rover is moving to point\n");
 			}
+			u = 2;
 		    #endif
         	pthread_mutex_lock(&mtx_position);
         	if(followTraj((sPt)position.pt) == 1) order = STP;
         	pthread_mutex_unlock(&mtx_position);
         }
-        else if(order == MVT && (typ_Cmd != TRAJ || typ_Cmd != POS)){
-        	printf("Rover follow points of table\n");
+        else if(order == MVT && typ_Cmd == POS){
             #ifdef THREAD_PROP
-            eSttProp = PROP_MVT_TRAJ_POS;
-		    if(order != prevOrder){
-				if(eSttProp != eSttProp_prev){
-				    if(eSttProp == PROP_MVT_TRAJ_POS) printf("----Rover is following points\n");
-				    eSttProp_prev = eSttProp;
-				}
-				prevOrder = order;
+		    if(u != 3){
+				printf("----Rover is moving to point and is turnning following angl\n");
 			}
+			u = 3;
+		    #endif
+        	pthread_mutex_lock(&mtx_position);
+        	if(followTraj((sPt)position.pt) == 1) order = STP;
+        	rotOnPt(position.ang);
+        	pthread_mutex_unlock(&mtx_position);
+        }
+        else if(order == MVT && (typ_Cmd != TRAJ || typ_Cmd != POS)){
+            #ifdef THREAD_PROP
+		    if(u != 4){
+				printf("----Rover is following points\n");
+			}
+			u = 4;
 		    #endif
             if(followTraj(tabTraj[i])==1){
                 if(i==(N-1))i=0;
@@ -169,7 +169,7 @@ void *threadGpio(void *param){
     
 	while(1){
 		bpStop = readGPIO(BP_STOP);
-		time = millis();
+		//time = millis();
 		
 		pthread_mutex_lock(&mtx_order);
 		switch(etat){ 
