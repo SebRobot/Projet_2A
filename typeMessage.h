@@ -18,7 +18,7 @@ typedef struct{
 typedef enum {SEND,RECV} eSendRecv;
 typedef enum {CMD,INFO} eTypeMsg;
 typedef enum {TRAJ, STATE, POS} eTypeCmd;
-typedef enum {STP, MVT} eSta;
+typedef enum {STP, MVT} eSta; 
 
 
 typedef union{

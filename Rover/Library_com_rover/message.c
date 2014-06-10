@@ -30,7 +30,7 @@ eSta order = STP;
 pthread_mutex_t mtx_order = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mtx_position = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mtx_typ_Cmd = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mtx_ArgStt;
+pthread_mutex_t mtx_ArgStt = PTHREAD_MUTEX_INITIALIZER;
 
 
 

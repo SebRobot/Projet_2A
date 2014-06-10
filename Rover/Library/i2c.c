@@ -52,8 +52,6 @@ void sendCom(char bufW[], char bufR[], int sizeW, int sizeR, int fd){
 
 
 int setI2C(int addr, int fd){
-
-
 	 if (ioctl(fd, I2C_SLAVE, addr) == -1){
 		perror("Failed to acquire bus access and/or talk to slave.");
 		return(-1);
