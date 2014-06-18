@@ -72,23 +72,28 @@ int sonar_get_distance_cm(void){
 	// Init sonar
 	    bufW[0] = SONAR_CMMND;						
 	    bufW[1] = SONAR_RNG_CM;						
-	    writeData(idFic, bufW, 2);					
+//	    writeData(idFic, bufW, 2);	
+	    sendCom(bufW,bufR, 2, 0, idFic);				
         usleep(80000); 
 	// Read soft version                     
-        readData(idFic, &bufR[0], 1);				                    
+        //readData(idFic, &bufR[0], 1);
+        sendCom(bufW,bufR, 0, 1, idFic);				                    
     // Read unknown
 	    bufW[0] = 0x01;						
-	    writeData(idFic, bufR, 1);					
-        readData(idFic, &bufR[1], 1);						
+	    //writeData(idFic, bufR, 1);					
+        //readData(idFic, &bufR[1], 1);						
+        sendCom(bufW,&bufR[1], 1, 1, idFic);
 
     // Read hight byte of range
         bufW[0] = SONAR_RNG_H ;
-	    writeData(idFic, bufW, 1);					
-	    readData(idFic, &bufR[2], 1);						
+	    //writeData(idFic, bufW, 1);					
+	    //readData(idFic, &bufR[2], 1);						
+	    sendCom(bufW, &bufR[2], 1, 1, idFic);
 	// Read low byte of range
         bufW[0] = SONAR_RNG_L;
-	    writeData(idFic, bufW, 1);					
-	    readData(idFic, &bufR[3], 1);
+	    //writeData(idFic, bufW, 1);					
+	    //readData(idFic, &bufR[3], 1);
+	    sendCom(bufW,&bufR[3], 1, 1, idFic);
 	    
 	// Close I2C				
 	closeI2C(idFic);

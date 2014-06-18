@@ -19,9 +19,9 @@
 
 //int stop = 1; // clnt_sock = -1;
 float volt = -1;
-int distSonar; // For sonar
+int distSonar = 0; // For sonar
 
-pthread_mutex_t mtx_dist_sonar = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mtx_distSonar = PTHREAD_MUTEX_INITIALIZER;
 
 
 
@@ -31,12 +31,16 @@ void updateLedBat(void){
 	static int time0 = -1;
 	static int time1Sonar = 0;
 	static int time0Sonar = -1;
+	int dst_sonar;
+	
+	pthread_mutex_lock(&mtx_distSonar);
+	dst_sonar = distSonar;
+	pthread_mutex_unlock(&mtx_distSonar);
 	
 	if(time0 < 0) time0 = millis(); 
 	if((time1 - time0) > (SEC_DSPL_TENSION * 1000) ){
 		time0 = time1;
 	    printf("Battery's tension = %.1lf V\n", volt);
-        printf("Sonar = %d\n", distSonar);
 		if(volt > MAX_THRESHOLD_TENS){
 		    writeGPIO(GREEN_LED_BIC, "high");
 		    writeGPIO(RED_LED_BIC, "low");
@@ -71,7 +75,7 @@ void updateLedBat(void){
     pthread_mutex_unlock(&mtx_order);
     
     // Update orange led in function of sonar
-    while(distSonar < DIST_MIN_SONAR){
+    while(dst_sonar < DIST_MIN_SONAR){
     	time1Sonar = millis();
     	switch(stateLED_Sonar){
 			case 0: writeGPIO(ORANGE_LED, "high");
@@ -87,7 +91,8 @@ void updateLedBat(void){
 					}
 					break;
 			default: break;
-		}	
+		}
+			
     }
 }
 
@@ -95,7 +100,6 @@ void updateLedBat(void){
 
 void *threadProp(void *param){
     int i=0;
-    int distSonar;
     static int u = 0;
     #ifdef THREAD_PROP
     //typedef enum {PROP_STP, PROP_MVT_TRAJ, PROP_MVT_TRAJ_POS, PROP_DFLT} eStateProp;
@@ -112,11 +116,13 @@ void *threadProp(void *param){
     prevOrder = order;
 
     while(1){
-    	volt = getBatVolt();
+    	//volt = getBatVolt();
     	
     	// Update distSonar
+    	/*pthread_mutex_lock(&mtx_distSonar);
     	distSonar = sonar_get_distance_cm();
-    	
+    	pthread_mutex_lock(&mtx_distSonar);
+    */	
     	pthread_mutex_lock(&mtx_order);
 		pthread_mutex_unlock(&mtx_typ_Cmd);
 		
@@ -134,9 +140,11 @@ void *threadProp(void *param){
     	//printf("distSonar = %d, \t DIST_MIN_SONAR = %d\n", distSonar, DIST_MIN_SONAR);
     	
     	// if there is an obstacl
+    	/*pthread_mutex_lock(&mtx_distSonar);
 		if(distSonar < DIST_MIN_SONAR) order = STP;
 		else order = prevOrder; 
-		
+		pthread_mutex_unlock(&mtx_distSonar);
+	*/	
         if(order == STP){
             #ifdef THREAD_PROP
 		    if(u != 1){
@@ -223,7 +231,7 @@ void *threadGpio(void *param){
     
 void *threadBattery(void* param){
 	while(1){
-		volt = getBatVolt();
+		//volt = getBatVolt();
     	updateLedBat();
 	}
 }
@@ -278,10 +286,10 @@ int main(){
 		initGPIO(BP_STOP);
 
 
+    idFicI2C = openI2C(FILE_I2C);
+    setI2C(ADDR_MD25, idFicI2C);
     
     //Create a thread for prop
-    idFicI2C=openI2C(FILE_I2C);
-    setI2C(ADDR_MD25, idFicI2C);
     if(pthread_create(&pthread_prop, NULL, threadProp, NULL)!=0){
          printf("ERROR; return code from pthread_create()\n");
          getchar();
@@ -327,11 +335,16 @@ int main(){
 		printf("Distance = %d\n\n", sonar_get_distance_cm());
 	*/	
 		// Update Info Rover
-		float x, y, theta, bat;
+		float x, y, theta;
+		int  dist;
 		#ifdef I2C_OK
 		pos3(&x, &y, &theta);
-		bat = getBatVolt();
+		volt = getBatVolt();
+		pthread_mutex_lock(&mtx_distSonar);
 		distSonar = sonar_get_distance_cm();
+		dist = distSonar;
+		pthread_mutex_unlock(&mtx_distSonar);
+		printf("distSonar = %d\n", distSonar);
 		#else
 		x = 0, y = 0, theta = 0;
 		bat = 15;
@@ -339,7 +352,7 @@ int main(){
 		#endif
 		
 		//printf("x = %.2f; y  %.2f; theta = %.2f; bat = %.2f; dist = %d\n", x, y , theta, bat, dist);
-		updateInfoRover(&argThreadSttRover, &x, &y, &theta, &bat, &distSonar);
+		updateInfoRover(&argThreadSttRover, &x, &y, &theta, &volt, &dist);
 /*		printf("argThreadSttRover.sinf.bat = %d\n"
 		       "argThreadSttRover.sinf.son = %.2f\n"
 		       "argThreadSttRover.sinf.pos.x = %.2f\n"
@@ -414,7 +427,7 @@ int main(){
     printf("d=%f\n",dist(0));
 */
 
-/*    close(idFicI2C);
+/*   close(idFicI2C);
     printf("Fermeture du bus i2c\n");
 */
     return 0;
