@@ -26,27 +26,24 @@ pthread_mutex_t mtx_distSonar = PTHREAD_MUTEX_INITIALIZER;
 
 
 void updateLedBat(void){
-	int stateLED_Sonar = 0;
 	static int time1 = 0, state_led_red = 1;
-	static int time0 = -1;
-	static int time1Sonar = 0;
-	static int time0Sonar = -1;
-	int dst_sonar;
+	static int time0 = -1;	
+	float tension;
 	
-	pthread_mutex_lock(&mtx_distSonar);
-	dst_sonar = distSonar;
-	pthread_mutex_unlock(&mtx_distSonar);
+	// TODO  accès concurentiel
+	tension = volt;
+	
 	
 	if(time0 < 0) time0 = millis(); 
 	if((time1 - time0) > (SEC_DSPL_TENSION * 1000) ){
 		time0 = time1;
-	    printf("Battery's tension = %.1lf V\n", volt);
-		if(volt > MAX_THRESHOLD_TENS){
+	    printf("Battery's tension = %.1lf V\n", tension);
+		if(tension > MAX_THRESHOLD_TENS){
 		    writeGPIO(GREEN_LED_BIC, "high");
 		    writeGPIO(RED_LED_BIC, "low");
 		}
         else{
-		    if(volt > MIN_THRESHOLD_TENS){
+		    if(tension > MIN_THRESHOLD_TENS){
 		        writeGPIO(RED_LED_BIC, "high");
 		        writeGPIO(GREEN_LED_BIC, "high");
 		    }
@@ -61,7 +58,7 @@ void updateLedBat(void){
 		}
 	}
 	time1 = millis();
-	
+/*	
 	// Update orange led in function of button STOP
 	pthread_mutex_lock(&mtx_order);
 	if(order == MVT){
@@ -75,6 +72,15 @@ void updateLedBat(void){
     pthread_mutex_unlock(&mtx_order);
     
     // Update orange led in function of sonar
+    int stateLED_Sonar = 0;
+	static int time1Sonar = 0;
+	static int time0Sonar = -1;
+	int dst_sonar;
+	
+	pthread_mutex_lock(&mtx_distSonar);
+	dst_sonar = distSonar;
+	pthread_mutex_unlock(&mtx_distSonar);
+	
     while(dst_sonar < DIST_MIN_SONAR){
     	time1Sonar = millis();
     	switch(stateLED_Sonar){
@@ -93,17 +99,17 @@ void updateLedBat(void){
 			default: break;
 		}
 			
-    }
+    }*/
 }
 
 
 
 void *threadProp(void *param){
     int i=0;
+    int cpt = 0;
+    int dist_Sonar;
     static int u = 0;
     #ifdef THREAD_PROP
-    //typedef enum {PROP_STP, PROP_MVT_TRAJ, PROP_MVT_TRAJ_POS, PROP_DFLT} eStateProp;
-    //eStateProp eSttProp = PROP_STP, eSttProp_prev;
     eSta prevOrder;
     eTypeCmd prevTyp_Cmd = STATE;
     #endif
@@ -112,17 +118,17 @@ void *threadProp(void *param){
     InitEncoder();
     InitAcc(2);
     
+    pthread_mutex_lock(&mtx_order);
     order = STP;
     prevOrder = order;
+	pthread_mutex_unlock(&mtx_order);
 
     while(1){
-    	//volt = getBatVolt();
-    	
     	// Update distSonar
-    	/*pthread_mutex_lock(&mtx_distSonar);
-    	distSonar = sonar_get_distance_cm();
     	pthread_mutex_lock(&mtx_distSonar);
-    */	
+    	dist_Sonar = distSonar;
+    	pthread_mutex_unlock(&mtx_distSonar);
+    	
     	pthread_mutex_lock(&mtx_order);
 		pthread_mutex_unlock(&mtx_typ_Cmd);
 		
@@ -140,11 +146,17 @@ void *threadProp(void *param){
     	//printf("distSonar = %d, \t DIST_MIN_SONAR = %d\n", distSonar, DIST_MIN_SONAR);
     	
     	// if there is an obstacl
-    	/*pthread_mutex_lock(&mtx_distSonar);
-		if(distSonar < DIST_MIN_SONAR) order = STP;
-		else order = prevOrder; 
-		pthread_mutex_unlock(&mtx_distSonar);
-	*/	
+		if(dist_Sonar < DIST_MIN_SONAR){
+			prevOrder = order; 	
+			order = STP;
+			cpt = 1;
+		}
+		else if(cpt == 1){
+			order = prevOrder;
+			cpt = 0;
+		}
+	
+		// Stop Rover if obstacl or press Stop button or command stop
         if(order == STP){
             #ifdef THREAD_PROP
 		    if(u != 1){
@@ -215,11 +227,11 @@ void *threadGpio(void *param){
 		    case 1 : if(bpStop == 1) etat = 2;
 		             order = MVT; 
 		             break;
-            case 2 : if(bpStop==0 || order == STP) etat=3;
+            case 2 : if(bpStop == 0 || order == STP) etat=3;
                      order = MVT;
 		             //if(time - timePrev > 50) timePrev = time;
                      break;
-            case 3 : if(bpStop==1) etat=0;
+            case 3 : if(bpStop == 1) etat=0;
                      order = STP; 
                      break;
 		    default : printf("Error in swicth\n");
@@ -229,10 +241,55 @@ void *threadGpio(void *param){
 	}
 }
     
-void *threadBattery(void* param){
+void *threadLed(void* param){
 	while(1){
 		//volt = getBatVolt();
     	updateLedBat();
+    	
+		// Update orange led in function of button STOP
+		pthread_mutex_lock(&mtx_order);
+		if(order == MVT){
+			writeGPIO(ORANGE_LED, "low");
+			writeGPIO(GREEN_LED, "high");
+		}
+		else{
+			writeGPIO(ORANGE_LED, "high");
+			writeGPIO(GREEN_LED, "low");
+		}
+		pthread_mutex_unlock(&mtx_order);
+	
+		// Update orange led in function of sonar
+		int stateLED_Sonar = 0;
+		static int time1Sonar = 0;
+		static int time0Sonar = -1;
+		int dst_sonar;
+
+		pthread_mutex_lock(&mtx_distSonar);
+		dst_sonar = distSonar;
+		pthread_mutex_unlock(&mtx_distSonar);
+
+		while(dst_sonar < DIST_MIN_SONAR){
+			time1Sonar = millis();
+			pthread_mutex_lock(&mtx_distSonar);
+			dst_sonar = distSonar;
+			pthread_mutex_unlock(&mtx_distSonar);
+			
+			switch(stateLED_Sonar){
+				case 0: writeGPIO(ORANGE_LED, "high");
+						if((time1Sonar - time0Sonar) > TIME_BLINK_SONAR){
+							stateLED_Sonar = 1;
+							time0Sonar = millis();
+						}
+						break;
+				case 1: writeGPIO(ORANGE_LED, "low");
+						if((time1Sonar - time0Sonar) > TIME_BLINK_SONAR){
+							stateLED_Sonar = 0;
+							time0Sonar = millis();
+						}
+						break;
+				default: break;
+			}
+		}
 	}
 }
 
@@ -271,7 +328,7 @@ int main(){
 
     pthread_t pthread_prop,
               pthread_gpio,
-              pthread_battery,
+              pthread_led,
               pthread_com;
               
 
@@ -304,7 +361,7 @@ int main(){
         }
         
     //Create a thread control gpio
-    if(pthread_create(&pthread_battery, NULL, threadBattery, NULL)!=0){
+    if(pthread_create(&pthread_led, NULL, threadLed, NULL)!=0){
          printf("ERROR; return code from pthread_create()\n");
          getchar();
          exit(-1);
@@ -344,7 +401,7 @@ int main(){
 		distSonar = sonar_get_distance_cm();
 		dist = distSonar;
 		pthread_mutex_unlock(&mtx_distSonar);
-		printf("distSonar = %d\n", distSonar);
+		printf("distSonar = %d\n", dist);
 		#else
 		x = 0, y = 0, theta = 0;
 		bat = 15;
