@@ -1,3 +1,5 @@
+//create a executable in the same repestory with "console" as name
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -164,7 +164,7 @@ void msgConsol(void){
 
     id = fork();
 
-    if(id == 0){ //child processus
+    if(id == 0){ //child processus, don't forget create the executable with concole.c
         execlp("gnome-terminal", "./gnome-terminal", "-e", "/home/seb/RobotOfficiel/Projet_2A/Control_station/console essai.fifo", NULL); //FIXME
         }
 
